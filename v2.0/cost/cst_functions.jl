@@ -6,6 +6,7 @@ function cstF_HVcbl2oss(l,S,kv,wp)#3
     os=true#offshore to offshore connection
     cb=cstF_cbl_ttl(l,S,kv,wp,os)
     cb.costs.ttl=cb.costs.ttl+(2*cstD_cfs().FC_ac)
+    eqpF_puImped(l,cb)
     return cb
 end
 
@@ -14,6 +15,7 @@ function cstF_HVcbl2pcc(l,S,kv,wp)#4
     os=false#offshore to onshore connection
     cb=cstF_cbl_ttl(l,S,kv,wp,os)
     cb.costs.ttl=cb.costs.ttl+(cstD_cfs().FC_ac)
+    eqpF_puImped(l,cb)
     return cb
 end
 
@@ -22,6 +24,7 @@ function cstF_HVcbl2pccX(l,S,kv,wp)#5
     os=false#offshore to onshore connection
     cbx=cstF_cblxfo_ttl(l,S,kv,wp,os)
     cbx.costs.ttl=cbx.costs.ttl+(cstD_cfs().FC_ac)
+    eqpF_sumryPu(l,kv,cbx)
     return cbx
 end
 
@@ -29,6 +32,7 @@ end
 function cstF_MVcbl2ossX(l,S,kv,wp)#1
     os=true#offshore to offshore connection
     cbx=cstF_cblxfo_ttl(l,S,kv,wp,os)
+    eqpF_sumryPu(l,kv,cbx)
     return cbx
 end
 
@@ -36,6 +40,7 @@ end
 function cstF_MVcbl2pccX(l,S,kv,wp)#2
     os=false#offshore to onshore connection
     cbx=cstF_cblxfo_ttl(l,S,kv,wp,os)
+    eqpF_sumryPu(l,kv,cbx)
     return cbx
 end
 
@@ -126,6 +131,7 @@ end
 ###################  Support functions for Transformers ########################
 ################################################################################
 #OSS/PCC transformer cost
+
 function cstF_xfo_ttl(S,wp,o2o)
     ks=cstD_cfs()#get the cost factors
     xfm=xfo()#create transformer object

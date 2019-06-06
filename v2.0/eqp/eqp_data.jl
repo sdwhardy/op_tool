@@ -9,6 +9,14 @@ Sections:
 ################################################################################
 ######################### Cables ###############################################
 ################################################################################
+#admitance values for infinite/DC lines
+function eqpD_dcAdm()
+        r=0.0093
+        x=0.0222
+        b=0.2217
+    return [r,x,b]
+end
+
 #Set maximum of cables possible in parallel
 function eqpD_MAXcbls(kv)
     if kv == 33 || kv == 66
@@ -187,22 +195,22 @@ end
 
 #add percent impendance of transformer
 function eqpD_xfoXR(kv,x)
-#    400/132 - X=8% R=0.14% on 100MVA base
-#    275/132 - X=9% R=0.16% on 100MVA base #Source National grid
+    #400/132 - X=8% R=0.14% on 100MVA base
+    #275/132 - X=9% R=0.16% on 100MVA base #Source National grid
     if kv == 400
         X=0.08
         R=0.0014
     elseif kv == 220 || kv == 66
         X=0.09
         R=0.0016
-#assumed values based on data given. needs to be updated
-elseif kv == 132 || kv == 33
+    #assumed values based on data given. needs to be updated
+    elseif kv == 132 || kv == 33
         X=0.1
         R=0.0018
     else
         error("kV doesn't match transformer for % impedance!")
     end
-    mva=eqpD_pu()[1]
+    mva=eqpF_pu()[1]
     x.xl=eqpF_puChgBs(mva,X)
     x.ohm=eqpF_puChgBs(mva,R)
 end

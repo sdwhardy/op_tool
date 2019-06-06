@@ -179,14 +179,30 @@ function eqpF_pu()
 end
 
 #change impedance to PU values
-function eqpf_puImped(cb,l)
-    cb.ohm=((cb.ohm*l)/cb.num)/eqpD_pu()[4]
-    cb.xl=((cb.xl*l)/cb.num)/eqpD_pu()[4]
-    cb.yc=cb.yc*l*cb.num*eqpD_pu()[4]
+function eqpF_puImped(l,cb)
+    cb.ohm=((cb.ohm*l)/cb.num)/eqpF_pu()[4]
+    cb.xl=((cb.xl*l)/cb.num)/eqpF_pu()[4]
+    cb.yc=cb.yc*l*cb.num*eqpF_pu()[4]
 end
 
 #Changes the base of PU value
 function eqpF_puChgBs(Sn,z)
     z=z*100*10^6/Sn
     return z
+end
+
+#converts transformer and cable values to PU
+function eqpF_xcXrlPu(l,xfm)
+	xfm.ohm=(xfm.ohm/xfm.num)/eqpF_pu()[4]
+	xfm.xl=(xfm.xl/xfm.num)/eqpF_pu()[4]
+end
+
+
+#combines and summarizes PU impedances
+function eqpF_sumryPu(l,kv,cbx)
+    eqpD_xfoXR(kv,cbx.xfm)
+    eqpF_xcXrlPu(l,cbx.xfm)
+    eqpF_puImped(l,cbx.cable)
+    cbx.cable.ohm=cbx.cable.ohm+cbx.xfm.ohm
+    cbx.cable.xl=cbx.cable.xl+cbx.xfm.xl
 end

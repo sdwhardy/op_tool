@@ -7,8 +7,8 @@ function lpd_fullProbSetUp()
     solmin=Array{Int64,1}()
     objmin=10000
     cntrls=control()
-    cntrls.xrad=true
-    cntrls.neib1=false
+    cntrls.xrad=false
+    cntrls.neib1=true
     cntrls.neib3=false
     cntrls.xradPcc=false
     cntrls.xradHlf=false
