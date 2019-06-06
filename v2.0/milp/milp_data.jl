@@ -1,4 +1,4 @@
-#Set up all OSS options to be included into large MILP
+#=Set up all OSS options to be included into large MILP
 #must include all OSS in smaller problems
 function lpd_fullProbSetUp()
     solmin=Array{Int64,1}()
@@ -13,4 +13,4 @@ function lpd_fullProbSetUp()
     cntrls.xXneib1=cntrls.xXrad
     cntrls.xXneib3=cntrls.xXrad
     return solmin, objmin, cntrls
-end
+end=#

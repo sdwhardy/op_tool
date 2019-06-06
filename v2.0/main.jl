@@ -22,8 +22,8 @@ include("cost/cst_data.jl")#costs
 include("cost/cst_functions.jl")#costs
 
 
-include("milp/milp_data.jl")#milp
-include("milp/milp_struct.jl")#milp
+#include("milp/milp_data.jl")#milp
+#include("milp/milp_struct.jl")#milp
 
 include("wind/wnd_struct.jl")#wind
 include("wind/wnd_functions.jl")#wind
@@ -32,7 +32,8 @@ include("eqp/eqp_struct.jl")#equipment
 include("eqp/eqp_data.jl")#equipment
 include("eqp/eqp_functions.jl")#equipment
 
-include("post_process/pp_functions.jl")#post processing
+include("post_process/pp_graphs.jl")#post processing
+include("post_process/pp_files.jl")#post processing
 
 
 domain=lof_layoutEez(lpd_fullProbSetUp()[3])

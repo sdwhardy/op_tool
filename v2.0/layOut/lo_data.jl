@@ -1,4 +1,23 @@
 ################################################################################
+################################ Mapping args ##################################
+################################################################################
+#Set up all OSS options to be included into large MILP
+#must include all OSS in smaller problems
+function lpd_fullProbSetUp()
+    solmin=Array{Int64,1}()
+    objmin=10000
+    cntrls=control()
+    cntrls.xrad=true
+    cntrls.neib1=false
+    cntrls.neib3=false
+    cntrls.xradPcc=false
+    cntrls.xradHlf=false
+    cntrls.xXrad=cntrls.xXrad=[1]
+    cntrls.xXneib1=cntrls.xXrad
+    cntrls.xXneib3=cntrls.xXrad
+    return solmin, objmin, cntrls
+end
+################################################################################
 ################################ ARC DATA ######################################
 ################################################################################
 #set min oss to oss arc length
@@ -96,4 +115,9 @@ end
 #set collector voltage
 function lod_cncsKv()
     return 66.0
+end
+
+#Grid PU mva
+function lod_cnceMva()
+    return 250.0
 end

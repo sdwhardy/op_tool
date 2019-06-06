@@ -1,0 +1,6 @@
+%TNEP optimizor input file test
+
+function mpc = owpp_tnep_map
+mpc.version = '2';
+mpc.baseMVA = 250.0;
+
