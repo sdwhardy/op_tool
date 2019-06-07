@@ -39,10 +39,10 @@ optLout,mxObj,cntrl=lpd_fullProbSetUp()
 domain=lof_layoutEez(cntrl)
 ppf_main2mfile(domain,optLout,mxObj)
 ppf_printOcn(domain)
-milp_main("test_run")
+solution,nw_data=milp_main("test_run")
 
 
-
+#=
 #cost functions
 wp=wndF_wndPrf(["Norther"])
 lngth=100
@@ -65,3 +65,4 @@ println(cstF_MVcbl2ossX(lngth,mva,kv,wp).costs)#1
 kv=300
 print("DCcbl2pcc: ")
 println(cstF_DCcbl2pcc(lngth,mva,kv,wp,domain.osss[1],domain.gens).costs)#6
+=#
