@@ -45,9 +45,13 @@ function cstF_MVcbl2pccX(l,S,kv,wp)#2
 end
 
 #Cost of DC line from OSS to PCC
-function cstF_DCcbl2pcc(l,S,kv,wp,oss,gens)#6
-    cbcn=cstF_dcCblCon_ttl(l,S,kv,wp)
+function cstF_DCcbl2pcc(l,S,wp,oss,gens)#6
+    cbcn=cstF_dcCblCon_ttl(l,S,wp)
     cstF_correctDc(cbcn,oss,gens)
+    rxb=eqpD_dcAdm()
+    cbcn.cable.ohm=rxb[1]
+    cbcn.cable.xl=rxb[2]
+    cbcn.cable.yc=rxb[3]
     return cbcn
 end
 
@@ -237,27 +241,29 @@ end
 ################################################################################
 ################################## DC calculations #############################
 ################################################################################
-function cstF_dcCblCon_ttl(l,S,kv,wp)
-    cbls_all=[]
-    cbls_2use=[]
-    cb=cbl()#create 1 object of type cbl
+function cstF_dcCblCon_ttl(l,S,wp)
     cnv=cstF_cnv_ttl(S,wp)#get converter
+    cb=cbl()#create 1 object of type cbl
     cb.costs.ttl=Inf#Initialize cable to very high total for comparison
     ks=cstD_cfs()#get the cost factors
-    cbls_all=eqpF_cbl_opt(kv,cbls_all,l)#returns all base data available for kv cables
-    cbls_2use=eqpF_cbl_sel(cbls_all,S,l)#Selects 1 to 10 of the cables in parallel appropriate for required capacity
+    for kv in [150,300]
+        cbls_all=[]
+        cbls_2use=[]
+        cbls_all=eqpF_cbl_opt(kv,cbls_all,l)#returns all base data available for kv cables
+        cbls_2use=eqpF_cbl_sel(cbls_all,S,l)#Selects 1 to 10 of the cables in parallel appropriate for required capacity
 
-    # loop through all cables
-    for value in cbls_2use
-        value.costs.cbc=cstF_cbl_cpx(value)#capex
-        value.costs.qc=0.0#cost of compensastion
-        value.costs.cm=cstF_eqp_cm(value,ks)#corrective maintenance
-        value.costs.rlc=cstF_HVDC_rlc(value,S,ks.T_op*ks.E_op*wp.delta)
-        value.costs.eens=eensF_owpp_eens(cnv,value,S,ks,wp)#eens calculation
-        value.costs.ttl=cstF_cbl_sum(value.costs)#totals the cable cost
-        #store lowest cost option
-        if value.costs.ttl<cb.costs.ttl
-            cb=deepcopy(value)
+        # loop through all cables
+        for value in cbls_2use
+            value.costs.cbc=cstF_cbl_cpx(value)#capex
+            value.costs.qc=0.0#cost of compensastion
+            value.costs.cm=cstF_eqp_cm(value,ks)#corrective maintenance
+            value.costs.rlc=cstF_HVDC_rlc(value,S,ks.T_op*ks.E_op*wp.delta)
+            value.costs.eens=eensF_owpp_eens(cnv,value,S,ks,wp)#eens calculation
+            value.costs.ttl=cstF_cbl_sum(value.costs)#totals the cable cost
+            #store lowest cost option
+            if value.costs.ttl<cb.costs.ttl
+                cb=deepcopy(value)
+            end
         end
     end
     #Store values as an owpp object and return

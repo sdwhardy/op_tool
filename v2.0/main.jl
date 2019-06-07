@@ -24,6 +24,7 @@ include("cost/cst_functions.jl")#costs
 
 #include("milp/milp_data.jl")#milp
 #include("milp/milp_struct.jl")#milp
+include("milp/milp_functions.jl")#milp
 
 include("wind/wnd_struct.jl")#wind
 include("wind/wnd_functions.jl")#wind
@@ -42,9 +43,9 @@ ppf_printOcn(domain)
 solution,nw_data=milp_main("test_run")
 
 
-#=
+
 #cost functions
-wp=wndF_wndPrf(["Norther"])
+#=wp=wndF_wndPrf(["Norther"])
 lngth=100
 mva=2000
 kv=220
@@ -64,5 +65,5 @@ println(cstF_MVcbl2ossX(lngth,mva,kv,wp).costs)#1
 
 kv=300
 print("DCcbl2pcc: ")
-println(cstF_DCcbl2pcc(lngth,mva,kv,wp,domain.osss[1],domain.gens).costs)#6
+println(cstF_DCcbl2pcc(lngth,mva,wp,domain.osss[1],domain.gens).cable)#6
 =#

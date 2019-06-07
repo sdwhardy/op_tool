@@ -84,7 +84,7 @@ function ppf_busInf(mf,ocn)
 	Binf=node()#creates an onshore connection point to connect all PCCS/DCLines
 	Binf.num=ocn.osss[length(ocn.osss)].num+1#gets the next available bus number
 	Binf.id="90"*string(Binf.num)
-	load=trunc(Int,length(mp.gens)*lod_cnceMva())#adds a load to the bus equal to all generation
+	load=trunc(Int,length(ocn.gens)*lod_cnceMva())#adds a load to the bus equal to all generation
 	ppf_bus2file(mf,[Binf],type1,type2,kv,load)
 end
 
@@ -219,6 +219,7 @@ function ppf_NeBrnchs(mf,mp,optLout)
 	ppf_goBrnch(mf,mp.gOarcs,optLout)
 	ppf_ooBrnch(mf,mp.oOarcs,optLout)
 	ppf_opBrnch(mf,mp.oParcs,optLout)
+	ppf_dcBrnch(mf,mp,optLout)
 	println(mf, "];")
 end
 
@@ -346,6 +347,30 @@ function ppf_opBrnch(mf,oParcs,optLout)
 	end
 end
 
+###########################
+######## DC Lines #########
+#DC candidate branches
+function ppf_dcBrnch(mf,mp,optLout)
+	Ss,wnds=lod_gensGps()[2:3]
+	S=Float64(sum(Ss))
+	gens=mp.gens
+	for path in mp.oParcs
+		wp=wndF_wndPrf(wnds)
+		link=cstF_DCcbl2pcc(path.lngth,S,wp,path.tail,gens)
+		acLink=cstF_HVcbl2pccX(path.lngth,S,lod_ossKv(),wp)
+		ppf_ifUnderSized(link.cable,S,link.cable.volt,path.lngth)
+		if link.cable.num != 0 && link.costs.ttl<acLink.costs.ttl
+			dcPath=arc()
+			dcPath=deepcopy(path)
+			dcPath.head.num=mp.osss[length(mp.osss)].num+1
+			dcPath.head.id="90"*string(dcPath.head.num)
+			ppf_candiBrnch(mf,link,dcPath,optLout)
+		else
+			println("DC connection not suitable for "*string(S)*"MVA, "*string(trunc(Int,path.lngth))*"Km. -removing")
+		end
+	end
+end
+
 ###########################################
 ###### Candidate Support Functions ########
 #Slightly undersized cables are allowed to be overloaded
@@ -358,7 +383,6 @@ end
 
 #Printing of candidate branch central loop
 function ppf_candiBrnch(mf,link,path,optLout)
-	println(link.cable.mva)
 	ppf_neBrnch(mf,link,path)
 	cst=link.costs.ttl
 	print(mf,cst,"\t")
