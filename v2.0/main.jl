@@ -32,16 +32,19 @@ include("eqp/eqp_struct.jl")#equipment
 include("eqp/eqp_data.jl")#equipment
 include("eqp/eqp_functions.jl")#equipment
 
-include("post_process/pp_graphs.jl")#post processing
-include("post_process/pp_files.jl")#post processing
+include("post_process/pp_2screen.jl")#post processing
+include("post_process/pp_2files.jl")#post processing
 
-
-domain=lof_layoutEez(lpd_fullProbSetUp()[3])
+optLout,mxObj,cntrl=lpd_fullProbSetUp()
+domain=lof_layoutEez(cntrl)
+ppf_main2mfile(domain,optLout,mxObj)
 ppf_printOcn(domain)
-wp=wndF_wndPrf(["Norther"])
+milp_main("test_run")
+
 
 
 #cost functions
+wp=wndF_wndPrf(["Norther"])
 lngth=100
 mva=2000
 kv=220
