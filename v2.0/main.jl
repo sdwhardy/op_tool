@@ -2,13 +2,10 @@ using DataFrames
 using CSV
 using StatsPlots
 using Polynomials
-#using Distributions
 using SpecialFunctions
 #MILP
 using PowerModels
-#using Mosek
 using JuMP, Gurobi
-#using MAT
 using JLD
 
 include("layout/lo_struct.jl")#layout
@@ -21,9 +18,8 @@ include("cost/cst_struct.jl")#costs
 include("cost/cst_data.jl")#costs
 include("cost/cst_functions.jl")#costs
 
-
-#include("milp/milp_data.jl")#milp
-#include("milp/milp_struct.jl")#milp
+include("milp/milp_data.jl")#milp
+include("milp/milp_struct.jl")#milp
 include("milp/milp_functions.jl")#milp
 
 include("wind/wnd_struct.jl")#wind
@@ -35,35 +31,11 @@ include("eqp/eqp_functions.jl")#equipment
 
 include("post_process/pp_2screen.jl")#post processing
 include("post_process/pp_2files.jl")#post processing
+include("post_process/pp_milp.jl")#post processing
 
-optLout,mxObj,cntrl=lpd_fullProbSetUp()
-domain=lof_layoutEez(cntrl)
-ppf_main2mfile(domain,optLout,mxObj)
-ppf_printOcn(domain)
-solution,nw_data=milp_main("test_run")
-
-
-
-#cost functions
-#=wp=wndF_wndPrf(["Norther"])
-lngth=100
-mva=2000
-kv=220
-print("HVcbl2oss: ")
-println(cstF_HVcbl2oss(lngth,mva,kv,wp).costs)#3
-print("HVcbl2pcc: ")
-println(cstF_HVcbl2pcc(lngth,mva,kv,wp).costs)#4
-print("HVcbl2pccX: ")
-println(cstF_HVcbl2pccX(lngth,mva,kv,wp).costs)#5
-println(cstF_xfo_ttl(mva,wp,true).costs)
-
-kv=66
-print("MVcbl2pccX: ")
-println(cstF_MVcbl2pccX(lngth,mva,kv,wp).costs)#2
-print("MVcbl2ossX: ")
-println(cstF_MVcbl2ossX(lngth,mva,kv,wp).costs)#1
-
-kv=300
-print("DCcbl2pcc: ")
-println(cstF_DCcbl2pcc(lngth,mva,wp,domain.osss[1],domain.gens).cable)#6
-=#
+solutions=lpf_buildsetUpMilp()
+solution=lpf_buildFnlMilp(solutions)
+#ppf_printOcnGPS(solution[1])
+#"v2.0/results/partial_sols/n_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"], "domain", domain)
+#solution=load("v2.0/results/partial_sols220kv66kv_1-7/n_1.jld")["domain"]
+ppf_printOcnXY(solution)

@@ -1,11 +1,11 @@
 #Imports the Corwind data and calculates load loss/ constrained energy
-function wndF_wndPrf(names)
-    prof=CSV.File("v2.0/wind/profiles/pow_indiv.csv")
+function wndF_wndPrf(nmes)
+    prof=CSV.File("../../common_wind_profs/profiles/pow_indiv_09.csv")
     wp=Array{Any,1}()
     for column in prof
         dummy=0.0
-        for name in names
-            dummy=dummy+getproperty(column, Symbol(name))
+        for nme in nmes
+            dummy=dummy+getproperty(column, Symbol(nme))
         end
         push!(wp,deepcopy(dummy))
     end
@@ -32,6 +32,7 @@ function wndF_ldLss(div, wind)
   llf=0.0
   for pu in div[:,2]
     llf=llf+(pu*0.85)^2
+    #llf=llf+(pu)^2
   end
   wind.delta=llf/length(div[:,2])#saves load loss factor
 end

@@ -1,12 +1,8 @@
-########## To Transform back to GPS ###########
-    #lof_unXformAxis(ocean)
-    #println("Axis untransformed...")
-    #lof_cartesian2gps(ocean.gens,base)
-    #lof_cartesian2gps(ocean.pccs,base)
 ################################################################################
 ########################### Main layout logic ##################################
 ################################################################################
 function lof_layoutEez(cnt)
+    #cnt=lpd_fnlProbSetUp()[3]
     ocean=eez()#build the eez in the ocean
     ocean.pccs=lof_layPccs()#add the gps of PCCs
     println("PCCs positioned at:")
@@ -34,6 +30,62 @@ function lof_layoutEez(cnt)
     lof_osss(ocean,cnt)#add all osss within boundary
     print(length(ocean.osss))
     println(" candidate OSSs contructed.")
+    lof_layoutEez_arcs(ocean,cnt)
+    return ocean
+end
+
+#Mian logic for final milp set up
+function lof_layoutEez_Sum(solutions,cntrl)
+    ocean=lof_layoutEez_nodes(solutions,cntrl)
+    lof_layoutEez_arcs(ocean,cntrl)
+    return ocean
+end
+
+#Extracts set up solution nodes
+function lof_layoutEez_nodes(sols,cnt)
+    ocean=eez()
+    all=eez()
+    ocean.gens=deepcopy(sols[4][1].gens)
+    ocean.pccs=deepcopy(sols[4][1].pccs)
+    for sol in sols[1]
+        lof_loadNodes(all.osss,sol.osss)
+    end
+
+    num=ocean.gens[length(ocean.gens)].num+1
+    ocean.osss,num=lof_uniqueNodes(ocean.osss,all.osss,num)
+    return ocean
+end
+
+#Loads the nd into nds
+function lof_loadNodes(osss,nosss)
+    for oss in nosss
+        push!(osss,deepcopy(oss))
+    end
+end
+
+#Keeps only unique nodes
+function lof_uniqueNodes(ocn,nds,num)
+    eyeDs=Array{String,1}()
+    for nd in nds
+        push!(eyeDs,nd.id)
+    end
+    eyeDs=unique(eyeDs)
+    for eyeD in eyeDs
+        for nd in nds
+            if string(eyeD)==(nd.id)
+                nd.num=deepcopy(num)
+                push!(ocn,nd)
+                num=num+1
+                @goto eyeD
+            end
+        end
+        @label eyeD
+    end
+    return ocn,num
+end
+
+#Main arcs creating logic for given nodes
+function lof_layoutEez_arcs(ocean,cnt)
     lof_GoArcs(ocean)#add all gen to oss arcs within boundary
     print(length(ocean.gOarcs))
     println(" candidate OWPP to OSS arcs contructed.")
@@ -47,9 +99,26 @@ function lof_layoutEez(cnt)
     print(length(ocean.oParcs))
     println(" candidate OSS to PCC arcs constructed.")
     println("EEZ layout complete.")
-    return ocean
 end
 
+#Re orders the the array in num order after the milp
+function lof_reOrderNodes(nds)
+    dummy=Array{node,1}()
+    Ids=Array{Float64,1}()
+    for nd in nds
+        push!(Ids,nd.num)
+    end
+    Ids=sort(Ids)
+    for i in Ids
+        for nd in nds
+            if i==nd.num
+                push!(dummy,nd)
+            end
+        end
+    end
+    nds=deepcopy(dummy)
+    return nds
+end
 ################################################################################
 ########################### Oss layout #########################################
 ################################################################################
@@ -79,16 +148,16 @@ function lof_osss(ocn,cnt)
             lof_ossRadPcc(i,cns,id,ocn.pccs,osss,rad,true)#lay halfway
         end
     end
-    osss=lof_ossOrder(osss,ocn)
+    num=length(ocn.pccs)+length(ocn.gens)
+    osss=lof_ossOrder(osss,ocn,num)
     lof_wndPfOss(osss,ocn)
     ocn.osss=deepcopy(osss)
 end
 
 #re numbers OSSs after placement
-function lof_ossOrder(osss,ocn)
+function lof_ossOrder(osss,ocn,num)
     lnths=Array{Float64,1}()
     ordrdOsss=Array{node,1}()
-    num=length(ocn.pccs)+length(ocn.gens)
     for oss in osss
         pcc_close=lof_xClosestPcc(oss,ocn.pccs)
         push!(lnths,lof_pnt2pnt_dist(oss.coord,pcc_close.coord))
@@ -568,9 +637,9 @@ end
 function lof_cartesian2gps(location,base)
     lnthLT=111#number of km in 1 degree of longitude at equator
     for value in location
-        value.coord.y=lof_lgth2deg(value.coord.y,lnthLT)+base.lat
-        value.coord.x=lof_lgth2deg(value.coord.x,lof_lg1deg(value.coord.y,lnthLT))+base.lng
-
+        value.gps.lat=lof_lgth2deg(value.coord.y,lnthLT)+base.lat
+        lnthLG=lof_lg1deg(value.gps.lat,lnthLT)
+        value.gps.lng=lof_lgth2deg(value.coord.x,lnthLG)+base.lng
     end
 end
 
@@ -581,14 +650,30 @@ end
 
 #performs inverse transforms on cartesian coordinates
 function lof_unXformAxis(ocn)
-    lof_slideAxis(ocn,(-1)*ocn.offset)
+    os=ocn.offset
+    lof_unSlideAxis(ocn,os)
     lof_unRotateAxis(ocn)
 end
 
-#inverse rotation of entire region
+#translates the oss by specified offset
+function lof_unSlideAxis(ocn,os)
+    for value in ocn.osss
+        value.coord.x=value.coord.x+os
+    end
+    for value in ocn.gens
+        value.coord.x=value.coord.x+os
+    end
+    for value in ocn.pccs
+        value.coord.x=value.coord.x+os
+    end
+end
+
+#inverse rotation of oss
 function lof_unRotateAxis(ocn)
-    offset=lof_rotateGroup(ocn.gens,(-1)*ocn.angle,0.0)
-    offset=lof_rotateGroup(ocn.pccs,(-1)*ocn.angle,0.0)
+    rads=(-1)*ocn.angle
+    offset=lof_rotateGroup(ocn.osss,rads,0.0)
+    offset=lof_rotateGroup(ocn.gens,rads,0.0)
+    offset=lof_rotateGroup(ocn.pccs,rads,0.0)
 end
 ##############################################################################
 ############################ laying PCC nodes ################################

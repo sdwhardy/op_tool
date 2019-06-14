@@ -2,7 +2,7 @@
 ######################## creates power models input file #######################
 ################################################################################
 #main logic to write the .m file
-function ppf_main2mfile(mp,s,mxObj)
+function ppf_main2mfile(mp,optLout,mxObj)
 	matfile = open("v2.0/results/tnep_map.mat","w")#open the .mat file
 	ppf_header(matfile)#print top function data
 	ppf_Buss(matfile,mp)#prints the bus data
@@ -10,8 +10,6 @@ function ppf_main2mfile(mp,s,mxObj)
 	ppf_Brnchs(matfile,mp,mxObj)#prints any pre-existing branches (onshore connections)
 	ppf_NeBrnchs(matfile,mp,optLout)#prints all candiadate branch data
 	close(matfile)#close the .mat file
-	#mv("v2.0/results/tnep_map.mat", "v2.0/results/tnep_map.m", force=true)#change file type to .m
-	#close(open("v2.0/results/tnep_map.m"))
 end
 
 # file description and function headers

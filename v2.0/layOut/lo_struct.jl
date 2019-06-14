@@ -47,8 +47,9 @@ mutable struct arc
       head::node
       tail::node
       lngth::Float64
+      mva::Float64#Only used for disaplaying solution
 end
-arc()=arc(node(),node(),69.69)
+arc()=arc(node(),node(),69.69,69.69)
 ###################################################################
 mutable struct eez
       osss::Array{node}
