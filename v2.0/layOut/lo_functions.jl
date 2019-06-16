@@ -2,7 +2,7 @@
 ########################### Main layout logic ##################################
 ################################################################################
 function lof_layoutEez(cnt)
-    #cnt=lpd_fnlProbSetUp()[3]
+    cnt=lpd_fullProbSetUp()[3][1]
     ocean=eez()#build the eez in the ocean
     ocean.pccs=lof_layPccs()#add the gps of PCCs
     println("PCCs positioned at:")
@@ -27,6 +27,7 @@ function lof_layoutEez(cnt)
     println("GPS coordinates projected onto cartesian plane.")
     lof_transformAxis(ocean)
     println("Axis transformed.")
+    println("OWPPs positioned at:")
     lof_osss(ocean,cnt)#add all osss within boundary
     print(length(ocean.osss))
     println(" candidate OSSs contructed.")
@@ -86,7 +87,7 @@ end
 
 #Main arcs creating logic for given nodes
 function lof_layoutEez_arcs(ocean,cnt)
-    lof_GoArcs(ocean)#add all gen to oss arcs within boundary
+    lof_GoArcs(ocean,cnt)#add all gen to oss arcs within boundary
     print(length(ocean.gOarcs))
     println(" candidate OWPP to OSS arcs contructed.")
     lof_GpArcs(ocean)#add all gen to pcc arcs within boundary
@@ -406,16 +407,20 @@ end
 ##### generator to OSS connection paths ########
 ################################################
 #Builds an MV path from an OWPP to a OSS if within range
-function lof_GoArcs(ocn)
+function lof_GoArcs(ocn,cnt)
     nos=lod_gen2Noss()
-    for i in ocn.gens
+    gpMin1Km=0
+    for (index, value) in enumerate(ocn.gens)
+        if (length(cnt.xXrad) < (length(ocn.gens)-1)) && index != 1
+            gpMin1Km=lof_pnt2pnt_dist(ocn.gens[index-1].coord,lof_xClosestPcc(value,ocn.pccs).coord)
+        end
         for j in ocn.osss
-            go_km=lof_pnt2pnt_dist(i.coord,j.coord)
-            mxKm=lof_mxMvKm(go_km,i,j)
-            gp_km=lof_pnt2pnt_dist(i.coord,lof_xClosestPcc(i,ocn.pccs).coord)
+            go_km=lof_pnt2pnt_dist(value.coord,j.coord)
+            mxKm=lof_mxMvKm(go_km,value,j)
+            gp_km=lof_pnt2pnt_dist(value.coord,lof_xClosestPcc(value,ocn.pccs).coord)
             op_km=lof_pnt2pnt_dist(j.coord,lof_xClosestPcc(j,ocn.pccs).coord)
-            if (mxKm && gp_km+nos >= op_km)
-                push!(ocn.gOarcs,lof_buildArc(i,j,go_km))
+            if (mxKm && gp_km+nos >= op_km && gpMin1Km <= op_km)
+                push!(ocn.gOarcs,lof_buildArc(value,j,go_km))
             else
             end
         end

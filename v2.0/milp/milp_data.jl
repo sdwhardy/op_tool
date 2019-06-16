@@ -9,13 +9,12 @@ function lpd_fullProbSetUp()
     cntrls=Array{control,1}()
     cntrl=control()
     neibs=[[1],[2],[3],[4],[5],[6],[7]]
-    #neibs=[[1],[2]]
     for neib in neibs
         cntrl=control()
         cntrl.xrad=true
         cntrl.neib1=true
         cntrl.neib3=true
-        cntrl.xradPcc=true
+        cntrl.xradPcc=false
         cntrl.xradHlf=false
         cntrl.xXrad=cntrl.xXrad=neib
         cntrl.xXneib1=cntrl.xXrad
@@ -33,9 +32,10 @@ function lpd_fnlProbSetUp()
     cntrls.xrad=false
     cntrls.neib1=false
     cntrls.neib3=false
-    cntrls.xradPcc=false
+    cntrls.xradPcc=true
     cntrls.xradHlf=true
     cntrls.xXrad=cntrls.xXrad=[1,2,3,4,5,6,7]
+    #cntrls.xXrad=cntrls.xXrad=[1]
     cntrls.xXneib1=cntrls.xXrad
     cntrls.xXneib3=cntrls.xXrad
     return solmin, objmin, cntrls

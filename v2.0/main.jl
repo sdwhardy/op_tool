@@ -36,6 +36,11 @@ include("post_process/pp_milp.jl")#post processing
 solutions=lpf_buildsetUpMilp()
 solution=lpf_buildFnlMilp(solutions)
 #ppf_printOcnGPS(solution[1])
-#"v2.0/results/partial_sols/n_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"], "domain", domain)
-#solution=load("v2.0/results/partial_sols220kv66kv_1-7/n_1.jld")["domain"]
-ppf_printOcnXY(solution)
+solution=load("v2.0/results/partial_sols/n_1.jld")
+plotly()
+ppf_printOcnXY(solution["asBuilt"])
+#=println(solution["objective"])
+wp=wndF_wndPrf(lod_gensGps()[3])
+xc=cstF_xfo_ttl(750,wp,true)
+xc3=cstF_xfo_ttl(250,wp,true)
+println(xc.costs.ttl-2*xc3.costs.ttl)=#

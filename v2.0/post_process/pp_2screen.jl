@@ -34,9 +34,9 @@ function ppf_printOcnXY_cst(ocean)
 	ylimin=trunc(Int,findmin(findmin([Yoss,Ypcc,Ygen])[1])[1])-os
 
 	plotly()
-	p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="PCC",xaxis = ("km", font(15, "Courier")),yaxis = ("km", font(15, "Courier")))
-	plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="OWPP")
-	plot!(p,Xoss,Yoss,color = :black,seriestype=:scatter,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="OSS")
+	p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,xticks = ylimin:2:56,xlims=(ylimin,ylimax),yticks = ylimin:5:56,label="PCC",xaxis = ("km", font(15, "Courier")),yaxis = ("km", font(15, "Courier")))
+	plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,xticks = ylimin:2:56,xlims=(ylimin,ylimax),yticks = ylimin:5:56,label="OWPP")
+	plot!(p,Xoss,Yoss,color = :black,seriestype=:scatter,xticks = ylimin:2:56,xlims=(ylimin,ylimax),yticks = ylimin:5:56,label="OSS")
 
 	xd=Array{Float64,1}()
 	yd=Array{Float64,1}()
@@ -47,7 +47,7 @@ function ppf_printOcnXY_cst(ocean)
 		push!(xd,i.head.coord.x)
 		push!(yd,i.tail.coord.y)
 		push!(yd,i.head.coord.y)
-		plot!(p,xd,yd,color = :black,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
+		plot!(p,xd,yd,color = :black,xticks = ylimin:2:56,xlims=(ylimin,ylimax),yticks = ylimin:5:56,label="")
 		ln=lof_pnt2pnt_dist(i.tail.coord,i.head.coord)
 		cbx=cstF_HVcbl2pcc(ln,i.mva,lod_ossKv(),wndF_wndPrf(i.tail.wnds))
 		cost=cost+cbx.costs.ttl
@@ -60,7 +60,7 @@ function ppf_printOcnXY_cst(ocean)
 		push!(xd,i.head.coord.x)
 		push!(yd,i.tail.coord.y)
 		push!(yd,i.head.coord.y)
-		plot!(p,xd,yd,color = :black,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
+		plot!(p,xd,yd,color = :black,xticks = ylimin:2:56,xlims=(ylimin,ylimax),yticks = ylimin:5:56,label="")
 		ln=lof_pnt2pnt_dist(i.tail.coord,i.head.coord)
 		cbx=cstF_HVcbl2oss(ln,i.mva,lod_ossKv(),wndF_wndPrf(i.tail.wnds))
 		println(string(cbx.num)*" - "*string(lod_ossKv())*"kV, "*string(i.mva)*"mva, "*string(round(Int,ln))*"km, "*string(cbx.size)*"mm from OSS "*string(i.tail.num)*" to OSS "*string(i.head.num)*" costs: "*string(cbx.costs.ttl))
@@ -73,7 +73,7 @@ function ppf_printOcnXY_cst(ocean)
 		push!(xd,i.head.coord.x)
 		push!(yd,i.tail.coord.y)
 		push!(yd,i.head.coord.y)
-		plot!(p,xd,yd,color = :red,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
+		plot!(p,xd,yd,color = :red,xticks = ylimin:2:56,xlims=(ylimin,ylimax),yticks = ylimin:5:56,label="")
 		ln=lof_pnt2pnt_dist(i.tail.coord,i.head.coord)
 		if round(Int,ln) > 1
 			ln=ln-1
@@ -89,7 +89,7 @@ function ppf_printOcnXY_cst(ocean)
 		push!(xd,i.head.coord.x)
 		push!(yd,i.tail.coord.y)
 		push!(yd,i.head.coord.y)
-		plot!(p,xd,yd,color = :red,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
+		plot!(p,xd,yd,color = :red,xticks = ylimin:2:56,xlims=(ylimin,ylimax),yticks = ylimin:5:56,label="")
 		ln=lof_pnt2pnt_dist(i.tail.coord,i.head.coord)
 		cbx=cstF_MVcbl2pccX(ln,i.mva,lod_cncsKv(),wndF_wndPrf(i.tail.name))
 		println(string(cbx.num)*" - "*string(lod_cncsKv())*"kV, "*string(i.mva)*"mva, "*string(round(Int,ln))*"km, "*string(cbx.size)*"mm from OWPP "*string(i.tail.num)*" to PCC "*string(i.head.num)*" costs: "*string(cbx.costs.ttl))
@@ -108,6 +108,7 @@ function ppf_printOcnXY(ocean)
 
 	for i in ocean.pccs
 		txt=text(string(i.num),12,:black,:right)
+		#txt=text(string(1),12,:black,:right)
 		push!(pcc,(i.coord.x,i.coord.y,txt))
 	end
 
@@ -137,9 +138,12 @@ function ppf_printOcnXY(ocean)
 	ylimin=trunc(Int,findmin(findmin([Yoss,Ypcc,Ygen])[1])[1])-os
 
 	plotly()
-	p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="PCC",xaxis = ("km", font(15, "Courier")),yaxis = ("km", font(15, "Courier")))
-	plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="OWPP")
-	plot!(p,Xoss,Yoss,color = :black,seriestype=:scatter,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="OSS")
+	#plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,label="PCC",xaxis = ("km", font(15, "Courier")),yaxis = ("km", font(15, "Courier")))
+	#plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,label="OWPP")
+
+	p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="PCC",xaxis = ("km", font(15, "Courier")),yaxis = ("km", font(15, "Courier")))
+	plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="OWPP")
+	plot!(p,Xoss,Yoss,color = :black,seriestype=:scatter,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="OSS")
 
 	xd=Array{Float64,1}()
 	yd=Array{Float64,1}()
@@ -150,7 +154,7 @@ function ppf_printOcnXY(ocean)
 		push!(xd,i.head.coord.x)
 		push!(yd,i.tail.coord.y)
 		push!(yd,i.head.coord.y)
-		plot!(p,xd,yd,color = :black,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
+		plot!(p,xd,yd,color = :black,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
 		xd=[]
 		yd=[]
 	end
@@ -159,7 +163,7 @@ function ppf_printOcnXY(ocean)
 		push!(xd,i.head.coord.x)
 		push!(yd,i.tail.coord.y)
 		push!(yd,i.head.coord.y)
-		plot!(p,xd,yd,color = :black,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
+		plot!(p,xd,yd,color = :black,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
 		xd=[]
 		yd=[]
 	end
@@ -168,7 +172,7 @@ function ppf_printOcnXY(ocean)
 		push!(xd,i.head.coord.x)
 		push!(yd,i.tail.coord.y)
 		push!(yd,i.head.coord.y)
-		plot!(p,xd,yd,color = :red,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
+		plot!(p,xd,yd,color = :red,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
 		xd=[]
 		yd=[]
 	end
@@ -177,7 +181,7 @@ function ppf_printOcnXY(ocean)
 		push!(xd,i.head.coord.x)
 		push!(yd,i.tail.coord.y)
 		push!(yd,i.head.coord.y)
-		plot!(p,xd,yd,color = :red,xticks = ylimin:5:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
+		plot!(p,xd,yd,color = :red,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="")
 		xd=[]
 		yd=[]
 	end
@@ -220,6 +224,9 @@ function ppf_printOcnGPS(ocn)
 	Ygen=[x[2] for x in gen]
 
 	plotly()
+	#=p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,label="PCC",xaxis = ("Longitude", font(15, "Courier")),yaxis = ("Latitude", font(15, "Courier")))
+	plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,label="OWPP")
+	plot!(p,Xoss,Yoss,color = :black,seriestype=:scatter,label="OSS")=#
 	p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,label="PCC",xaxis = ("Longitude", font(15, "Courier")),yaxis = ("Latitude", font(15, "Courier")))
 	plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,label="OWPP")
 	plot!(p,Xoss,Yoss,color = :black,seriestype=:scatter,label="OSS")

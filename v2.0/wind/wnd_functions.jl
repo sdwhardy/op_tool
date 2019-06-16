@@ -1,5 +1,6 @@
 #Imports the Corwind data and calculates load loss/ constrained energy
 function wndF_wndPrf(nmes)
+    #nmes=lod_gensGps()[3]
     prof=CSV.File("../../common_wind_profs/profiles/pow_indiv_09.csv")
     wp=Array{Any,1}()
     for column in prof
