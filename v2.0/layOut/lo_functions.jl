@@ -2,7 +2,7 @@
 ########################### Main layout logic ##################################
 ################################################################################
 function lof_layoutEez(cnt)
-    cnt=lpd_fullProbSetUp()[3][1]
+    #cnt=lpd_fullProbSetUp()[3][1]
     ocean=eez()#build the eez in the ocean
     ocean.pccs=lof_layPccs()#add the gps of PCCs
     println("PCCs positioned at:")

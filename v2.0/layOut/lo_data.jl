@@ -32,8 +32,9 @@ end
 ##############################
 ########## PCCs ##############
 function lod_Belgium()
-    return true
+    return false
 end
+
 function lod_pccGps()
     pcc=Array{Tuple,1}()
     if lod_Belgium()==true
