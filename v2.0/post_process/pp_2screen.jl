@@ -122,7 +122,6 @@ function ppf_printOcnXY(ocean)
 		push!(oss,(i.coord.x,i.coord.y,txt))
 	end
 
-
 	os=0
 	Xoss=[x[1] for x in oss]
 	Yoss=[x[2] for x in oss]
@@ -138,13 +137,14 @@ function ppf_printOcnXY(ocean)
 	ylimin=trunc(Int,findmin(findmin([Yoss,Ypcc,Ygen])[1])[1])-os
 
 	plotly()
-	#plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,label="PCC",xaxis = ("km", font(15, "Courier")),yaxis = ("km", font(15, "Courier")))
-	#plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,label="OWPP")
+	p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,label="PCC",xaxis = ("km", font(15, "Courier")),yaxis = ("km", font(15, "Courier")))
+	plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,label="OWPP")
+	plot!(p,Xoss,Yoss,annotations=oss,color = :black,seriestype=:scatter,label="OSS")
 
-	p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="PCC",xaxis = ("km", font(15, "Courier")),yaxis = ("km", font(15, "Courier")))
+	#=p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="PCC",xaxis = ("km", font(15, "Courier")),yaxis = ("km", font(15, "Courier")))
 	plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="OWPP")
 	plot!(p,Xoss,Yoss,color = :black,seriestype=:scatter,xticks = ylimin:2:ylimax,xlims=(ylimin,ylimax),yticks = ylimin:5:ylimax,label="OSS")
-
+=#
 	xd=Array{Float64,1}()
 	yd=Array{Float64,1}()
 	op=Array{Tuple,1}()
@@ -229,7 +229,7 @@ function ppf_printOcnGPS(ocn)
 	plot!(p,Xoss,Yoss,color = :black,seriestype=:scatter,label="OSS")=#
 	p=plot(Xpcc,Ypcc,annotations=pcc,color = :blue,seriestype=:scatter,label="PCC",xaxis = ("Longitude", font(15, "Courier")),yaxis = ("Latitude", font(15, "Courier")))
 	plot!(p,Xgen,Ygen,annotations=gen,color = :red,seriestype=:scatter,label="OWPP")
-	plot!(p,Xoss,Yoss,color = :black,seriestype=:scatter,label="OSS")
+	plot!(p,Xoss,Yoss,annotations=oss,color = :black,seriestype=:scatter,label="OSS")
 
 
 	xd=Array{Float64,1}()

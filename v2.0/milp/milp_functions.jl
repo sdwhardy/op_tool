@@ -2,7 +2,7 @@
 function milp_main(nme)
     filename="v2.0/results/"*nme*".m"
     mv("v2.0/results/tnep_map.mat", filename, force=true)
-    solver=GurobiSolver(Presolve=1)
+    solver=GurobiSolver(Presolve=1, TimeLimit=25000.0)
     result = run_tnep(filename, DCPPowerModel, solver)
     network_data = PowerModels.parse_file(filename)
     return result, network_data
@@ -18,7 +18,7 @@ function lpf_buildsetUpMilp()
     optLout,mxObj,cntrls=lpd_fullProbSetUp()
     for cntrl in cntrls
         domain=lof_layoutEez(cntrl)
-        ppf_main2mfile(domain,optLout,mxObj)
+        ppf_main2mfile(domain,optLout,mxObj,cntrl)
         solution,nw_data=milp_main("milp")
         asBuilt,optIds=ppm_reCnstrctSol(solution,nw_data,domain)
         asBuilt.pccs=lof_reOrderNodes(asBuilt.pccs)
@@ -44,7 +44,7 @@ function lpf_buildFnlMilp(solutions)
     domain=lof_layoutEez_Sum(solutions,cntrl)
     domain.angle=solutions[4][1].angle
     domain.offset=solutions[4][1].offset
-    ppf_main2mfile(domain,optLout,mxObj)
+    ppf_main2mfile(domain,optLout,mxObj,cntrl)
     solution,nw_data=milp_main("milp")
     asBuilt,Ids=ppm_reCnstrctSol(solution,nw_data,domain)
     asBuilt.pccs=lof_reOrderNodes(asBuilt.pccs)

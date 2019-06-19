@@ -2,13 +2,13 @@
 ######################## creates power models input file #######################
 ################################################################################
 #main logic to write the .m file
-function ppf_main2mfile(mp,optLout,mxObj)
+function ppf_main2mfile(mp,optLout,mxObj,cnt)
 	matfile = open("v2.0/results/tnep_map.mat","w")#open the .mat file
 	ppf_header(matfile)#print top function data
 	ppf_Buss(matfile,mp)#prints the bus data
 	ppf_Gens(matfile,mp)#prints all generator (OWPP) data
 	ppf_Brnchs(matfile,mp,mxObj)#prints any pre-existing branches (onshore connections)
-	ppf_NeBrnchs(matfile,mp,optLout)#prints all candiadate branch data
+	ppf_NeBrnchs(matfile,mp,optLout,cnt)#prints all candiadate branch data
 	close(matfile)#close the .mat file
 end
 
@@ -211,13 +211,19 @@ end
 ########################## Candidate Branches ##################################
 ################################################################################
 #Control logic for printing candidate lines
-function ppf_NeBrnchs(mf,mp,optLout)
+function ppf_NeBrnchs(mf,mp,optLout,cnt)
 	ppf_HdrNeBrnch(mf)
+	println("Adding OWPP to PCC candidates...")
 	ppf_gpBrnch(mf,mp.gParcs,optLout)
+	println("Adding OWPP to OSS candidates...")
 	ppf_goBrnch(mf,mp.gOarcs,optLout)
-	ppf_ooBrnch(mf,mp.oOarcs,optLout)
-	ppf_opBrnch(mf,mp.oParcs,optLout)
+	println("Adding OSS to OSS candidates...")
+	ppf_ooBrnch(mf,mp.oOarcs,optLout,mp.oOcbls)
+	println("Adding OSS to PCC candidates...")
+	ppf_opBrnch(mf,mp.oParcs,optLout,cnt)
+	println("Adding DC candidates...")
 	ppf_dcBrnch(mf,mp,optLout)
+	#ppf_dcSlvable(mf,mp,optLout)
 	println(mf, "];")
 end
 
@@ -263,12 +269,12 @@ end
 ###########################
 ####### OSS to OSS ########
 #OWPP to OSS candidate branches
-function ppf_ooBrnch(mf,oOarcs,optLout)
+function ppf_ooBrnch(mf,oOarcs,optLout,oOcbls)
 	link=owpp()
 	for path in oOarcs
 		#Adds half sized cable
 		wp=wndF_wndPrf([path.tail.wnds[1]])
-		cable=cstF_HVcbl2oss(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),wp)
+		cable=cstF_HVcbl2ossChk(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),wp,oOcbls)
 		ppf_ifUnderSized(cable,path.tail.mvas[1]/2,lod_ossKv(),path.lngth)
 		link.cable=cable
 		link.costs.ttl=cable.costs.ttl
@@ -286,7 +292,8 @@ function ppf_ooBrnch(mf,oOarcs,optLout)
 			mva=mva+path.tail.mvas[j]
 			push!(ka,path.tail.wnds[j])
 			wp=wndF_wndPrf(ka)
-			cable=cstF_HVcbl2oss(path.lngth,mva,lod_ossKv(),wp)
+
+			cable=cstF_HVcbl2ossChk(path.lngth,mva,lod_ossKv(),wp,oOcbls)
 			ppf_ifUnderSized(cable,mva,lod_ossKv(),path.lngth)
 			link.cable=cable
 			link.costs.ttl=cable.costs.ttl
@@ -299,47 +306,89 @@ function ppf_ooBrnch(mf,oOarcs,optLout)
 	end
 end
 
+#Checks required cable against already stored, if it does not exist it is calculated
+function cstF_HVcbl2ossChk(lngth,mva,kv,wp,oOcbls)
+	cable=cbl()
+	lngth=round(Int64,lngth)
+	eyeD=string(lngth)*string(mva)
+	ids=[x[1] for x in oOcbls]
+	for (index,value) in enumerate(ids)
+		if string(eyeD) == string(value)
+			cable=oOcbls[index][2]
+			@goto hv_chk
+		end
+	end
+	cable=cstF_HVcbl2oss(lngth,mva,kv,wp)
+	push!(oOcbls,(eyeD,cable))
+	@label hv_chk
+	return cable
+end
 ###########################
 ####### OSS to PCC ########
 #OSS to PCC candidate branches
-function ppf_opBrnch(mf,oParcs,optLout)
+function ppf_opBrnch(mf,oParcs,optLout,cnt)
 	link=owpp()
+	if length(oParcs) != 0
+		mva=sum(oParcs[1].tail.mvas)
+	end
 	for path in oParcs
-		#Adds a partially sized cable
-		wp=wndF_wndPrf([path.tail.wnds[1]])
-		if lod_ossKv() == lod_pccKv()
-			cable=cstF_HVcbl2pcc(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),wp)
-			link.cable=cable
-		else
-			link=cstF_HVcbl2pccX(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),wp)
-		end
-		ppf_ifUnderSized(link.cable,path.tail.mvas[1]/2,lod_ossKv(),path.lngth)
-		link.costs.ttl=cable.costs.ttl
-		if link.cable.num != 0
-			ppf_candiBrnch(mf,link,path,optLout)
-		else
-			println("No suitable "*string(lod_ossKv())*"Kv, "*string(path.tail.mvas[1]/2)*"MVA cable for "*string(trunc(Int,path.lngth))*"Km. -removing")
-		end
-
-		#Add cables as multiples of attached generators
-		mva=0.0
-		ka=Array{String,1}()
-		for j=1:length(path.tail.mvas)
-			mva=mva+path.tail.mvas[j]
-			push!(ka,path.tail.wnds[j])
-			wp=wndF_wndPrf(ka)
+		if length(cnt.xXrad) != 1
+			#Adds a partially sized cable
+			wp=wndF_wndPrf([path.tail.wnds[1]])
 			if lod_ossKv() == lod_pccKv()
-				cable=cstF_HVcbl2pcc(path.lngth,mva,lod_ossKv(),wp)
+				cable=cstF_HVcbl2pcc(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),wp)
 				link.cable=cable
 			else
-				link=cstF_HVcbl2pccX(path.lngth,mva,lod_ossKv(),wp)
+				link=cstF_HVcbl2pccX(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),wp)
 			end
-			ppf_ifUnderSized(link.cable,mva,lod_ossKv(),path.lngth)
+			ppf_ifUnderSized(link.cable,path.tail.mvas[1]/2,lod_ossKv(),path.lngth)
 			link.costs.ttl=cable.costs.ttl
 			if link.cable.num != 0
 				ppf_candiBrnch(mf,link,path,optLout)
 			else
-				println("No suitable "*string(lod_ossKv())*"Kv, "*string(mva)*"MVA cable for "*string(trunc(Int,path.lngth))*"Km. -removing")
+				println("No suitable "*string(lod_ossKv())*"Kv, "*string(path.tail.mvas[1]/2)*"MVA cable for "*string(trunc(Int,path.lngth))*"Km. -removing")
+			end
+
+			#Add cables as multiples of attached generators
+			mva=0.0
+			ka=Array{String,1}()
+			for j=1:length(path.tail.mvas)
+				mva=mva+path.tail.mvas[j]
+				push!(ka,path.tail.wnds[j])
+				wp=wndF_wndPrf(ka)
+				if lod_ossKv() == lod_pccKv()
+					cable=cstF_HVcbl2pcc(path.lngth,mva,lod_ossKv(),wp)
+					link.cable=cable
+				else
+					link=cstF_HVcbl2pccX(path.lngth,mva,lod_ossKv(),wp)
+				end
+				ppf_ifUnderSized(link.cable,mva,lod_ossKv(),path.lngth)
+				link.costs.ttl=cable.costs.ttl
+				if link.cable.num != 0
+					ppf_candiBrnch(mf,link,path,optLout)
+				else
+					println("No suitable "*string(lod_ossKv())*"Kv, "*string(mva)*"MVA cable for "*string(trunc(Int,path.lngth))*"Km. -removing")
+				end
+			end
+		else
+			lrgFnd = false
+			while lrgFnd == false && mva>path.tail.mvas[1]
+				wp=wndF_wndPrf(path.tail.wnds)
+				if lod_ossKv() == lod_pccKv()
+					cable=cstF_HVcbl2pcc(path.lngth,mva,lod_ossKv(),wp)
+					link.cable=cable
+				else
+					link=cstF_HVcbl2pccX(path.lngth,mva,lod_ossKv(),wp)
+				end
+				ppf_ifUnderSized(link.cable,mva,lod_ossKv(),path.lngth)
+				link.costs.ttl=cable.costs.ttl
+				if link.cable.num != 0
+					lrgFnd = true
+					ppf_candiBrnch(mf,link,path,optLout)
+				else
+					mva=mva-path.tail.mvas[length(path.tail.mvas)]
+					println("No suitable "*string(lod_ossKv())*"Kv, "*string(mva)*"MVA cable for "*string(trunc(Int,path.lngth))*"Km. -reducing")
+				end
 			end
 		end
 	end
@@ -347,12 +396,44 @@ end
 
 ###########################
 ######## DC Lines #########
+function ppf_dcSlvable(mf,mp,optLout)
+	for oss in mp.osss
+		match=false
+		for oP in mp.oParcs
+			if oss.num == oP.tail.num
+				match == true
+				@goto dcSlvable
+			else
+			end
+		end
+		@label dcSlvable
+		if match == false
+			pcc_close=lof_xClosestPcc(oss,mp.pccs)
+			Sac=Float64(sum(oss.mvas))
+			wp=wndF_wndPrf(oss.wnds)
+			l=lof_pnt2pnt_dist(oss.coord,pcc_close.coord)
+			hvCbl=cstF_HVcbl2pcc(l,Sac,lod_ossKv(),wp)
+			println("Checking HVDC potential for OSS: "*string(oss.num))
+			if hvCbl.costs.ttl == Inf
+				#S=Float64(sum(mp.osss[length(mp.osss)].mvas))
+				link=cstF_DCcbl2pcc(l,Sac,wp,oss,mp.gens)
+				dcPath=arc()
+				dcPath.tail=deepcopy(oss)
+				dcPath.head.num=mp.osss[length(mp.osss)].num+1
+				dcPath.head.id="90"*string(dcPath.head.num)
+				ppf_candiBrnch(mf,link,dcPath,optLout)
+				println("HVDC line added to OSS: "*string(oss.num))
+			end
+		end
+	end
+end
+
 #DC candidate branches
 function ppf_dcBrnch(mf,mp,optLout)
 	Ss,wnds=lod_gensGps()[2:3]
-	S=Float64(sum(Ss))
 	gens=mp.gens
 	for path in mp.oParcs
+		S=Float64(sum(path.tail.mvas))
 		wp=wndF_wndPrf(wnds)
 		link=cstF_DCcbl2pcc(path.lngth,S,wp,path.tail,gens)
 		acLink=cstF_HVcbl2pccX(path.lngth,S,lod_ossKv(),wp)

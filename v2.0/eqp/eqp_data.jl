@@ -151,7 +151,7 @@ end
 
 #Sets the limits that cables will be sized as a % of OWPP capacity
 function eqpD_eqp_lims()
-    return [0.9,1.5]
+    return [0.9,1.1]
 end
 
 #failure data for cables

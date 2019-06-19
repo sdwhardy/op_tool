@@ -38,8 +38,10 @@ mutable struct node
       wnds::Array{String}
       num::Int64
       id::String
+      upstrm::Int64
+      dwnstrm::Int64
 end
-node()=node(gps(),"colruyt",xy(),69.69,69.69,[],[],69,"sixty-nine")
+node()=node(gps(),"colruyt",xy(),69.69,69.69,[],[],69,"sixty-nine",69,69)
 ####################################################################
 ##################### Arcs #########################################
 ####################################################################
@@ -61,6 +63,8 @@ mutable struct eez
       gParcs::Array{arc}
       angle::Float64
       offset::Float64
+      mnGap::Float64
+      oOcbls::Array{Tuple}          
 end
-eez()=eez([],[],[],[],[],[],[],69.69,69.69)
+eez()=eez([],[],[],[],[],[],[],69.69,69.69,69.69,[])
 ###################################################################

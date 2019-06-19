@@ -2,7 +2,7 @@
 ########################### Main layout logic ##################################
 ################################################################################
 function lof_layoutEez(cnt)
-    #cnt=lpd_fullProbSetUp()[3][1]
+    #,./cnt=lpd_fullProbSetUp()[3][1]
     ocean=eez()#build the eez in the ocean
     ocean.pccs=lof_layPccs()#add the gps of PCCs
     println("PCCs positioned at:")
@@ -27,11 +27,15 @@ function lof_layoutEez(cnt)
     println("GPS coordinates projected onto cartesian plane.")
     lof_transformAxis(ocean)
     println("Axis transformed.")
-    println("OWPPs positioned at:")
     lof_osss(ocean,cnt)#add all osss within boundary
-    print(length(ocean.osss))
-    println(" candidate OSSs contructed.")
+    println("OWPPs positioned at:")
+    for value in ocean.osss
+        print(value.num)
+        print(" - ")
+        println(value.coord)
+    end
     lof_layoutEez_arcs(ocean,cnt)
+    ppf_printOcnXY(ocean)
     return ocean
 end
 
@@ -120,6 +124,36 @@ function lof_reOrderNodes(nds)
     nds=deepcopy(dummy)
     return nds
 end
+
+#re numbers Gens after placement
+function lof_gensOrder(gens,ocn,num)
+    lnths=Array{Float64,1}()
+    ordrdGens=Array{node,1}()
+    for gen in gens
+        pcc_close=lof_xClosestPcc(gen,ocn.pccs)
+        push!(lnths,lof_pnt2pnt_dist(gen.coord,pcc_close.coord))
+    end
+    for lps=1:1:length(lnths)
+        push!(ordrdGens,gens[findmin(lnths)[2]])
+        ordrdGens[length(ordrdGens)].num=deepcopy(num+lps)
+        lnths[findmin(lnths)[2]]=Inf
+    end
+    gens = ordrdGens
+    return gens
+end
+
+function lof_avePcc(pccs)
+    avPcc=node()
+    avPcc.coord.x=0
+    avPcc.coord.y=0
+    for pcc in pccs
+        avPcc.coord.x=avPcc.coord.x+pcc.coord.x
+        avPcc.coord.y=avPcc.coord.y+pcc.coord.y
+    end
+    avPcc.coord.x=avPcc.coord.x/length(pccs)
+    avPcc.coord.y=avPcc.coord.y/length(pccs)
+    return avPcc
+end
 ################################################################################
 ########################### Oss layout #########################################
 ################################################################################
@@ -165,10 +199,21 @@ function lof_ossOrder(osss,ocn,num)
     end
     for lps=1:1:length(lnths)
         push!(ordrdOsss,osss[findmax(lnths)[2]])
-        ordrdOsss[length(ordrdOsss)].num=deepcopy(num+lps)
         lnths[findmax(lnths)[2]]=0
     end
-    osss = ordrdOsss
+    ordrdOsss2=Array{node,1}()
+    gens=reverse(ocn.gens,1)
+    for (index,value) in enumerate(gens)
+        for oss in ordrdOsss
+            if value.num == oss.dwnstrm
+                push!(ordrdOsss2,oss)
+            end
+        end
+    end
+    for (index,value) in enumerate(ordrdOsss2)
+        value.num=deepcopy(num+index)
+    end
+    osss = ordrdOsss2
     return osss
 end
 
@@ -200,6 +245,10 @@ function lof_ossXradius(i,cns,osss,cnt)
     for j=1:length(x_close)
         osub1=node()
         osub2=node()
+        osub1.upstrm=cns[i].num
+        osub1.dwnstrm=x_close[j].num
+        osub2.upstrm=cns[i].num
+        osub2.dwnstrm=x_close[j].num
         alpha_beta=reverse([[cns[i].coord.y,x_close[j].coord.y] ones(2)]\[cns[i].coord.x,x_close[j].coord.x])#fits linear model
         osub1.coord,osub2.coord=lof_atXgen(alpha_beta,cns[i],x_close[j])
         osub1.id="3"*string(x[j])*string(cns[i].id)[2:end]*string(x_close[j].id)[2:end]
@@ -269,6 +318,15 @@ end
 #finds x closest owpp neighbours
 function lof_xClosestGens(i,cns,x)
     x_close=Array{node,1}()
+    for index in x
+        if (i-index) >= 1
+            push!(x_close,cns[i-index])
+        end
+    end
+    return x_close
+end
+#=function lof_xClosestGens(i,cns,x)
+    x_close=Array{node,1}()
     lnths=Array{Float64,1}()
     for j=i+1:1:length(cns)
         push!(lnths,lof_pnt2pnt_dist(cns[i].coord,cns[j].coord))
@@ -286,7 +344,7 @@ function lof_xClosestGens(i,cns,x)
         lp=lp+1
     end
     return x_close
-end
+end=#
 #############################################
 ##### OSS at centre line to X neighbour #####
 #############################################
@@ -297,6 +355,8 @@ function lof_oss1neibs(i,cns,osss,cnt)
     x_close=lof_xClosestGens(i,cns,x)
     for j=1:length(x_close)
         osub=node()
+        osub.upstrm=cns[i].num
+        osub.dwnstrm=x_close[j].num
         osub.coord=lof_mdOss(x_close[j],cns[i])
         osub.id="5"*string(x[j])*string(cns[i].id)[2:end]*string(x_close[j].id)[2:end]
         push!(osss,deepcopy(osub))
@@ -323,6 +383,10 @@ function lof_oss3neibs(i,cns,osss,cnt)
     for j=1:length(x_close)
         osub1=node()
         osub2=node()
+        osub1.upstrm=cns[i].num
+        osub1.dwnstrm=x_close[j].num
+        osub2.upstrm=cns[i].num
+        osub2.dwnstrm=x_close[j].num
         xy0.coord=lof_mdOss(x_close[j],cns[i])
         osub1.coord=lof_mdOss(xy0,cns[i])
         osub2.coord=lof_mdOss(x_close[j],xy0)
@@ -346,6 +410,8 @@ function lof_ossRadPcc(i,cns,id,pccs,osss,rad,frac)
         rad=rad*lof_pnt2pnt_dist(cns[i].coord,x.coord)
     end
     osub=node()
+    osub.upstrm=cns[i].num
+    osub.dwnstrm=x.num
     alpha_beta=reverse([[cns[i].coord.y,x.coord.y] ones(2)]\[cns[i].coord.x,x.coord.x])#fits linear model
     osub.coord=lof_atXPcc(alpha_beta,cns[i],x,rad)
     osub.id=string(id)*string(cns[i].id)[2:end]*string(x.id)[2:end]
@@ -408,24 +474,45 @@ end
 ################################################
 #Builds an MV path from an OWPP to a OSS if within range
 function lof_GoArcs(ocn,cnt)
-    nos=lod_gen2Noss()
-    gpMin1Km=0
     for (index, value) in enumerate(ocn.gens)
-        if (length(cnt.xXrad) < (length(ocn.gens)-1)) && index != 1
-            gpMin1Km=lof_pnt2pnt_dist(ocn.gens[index-1].coord,lof_xClosestPcc(value,ocn.pccs).coord)
+        if (length(cnt.xXrad) < (length(ocn.gens)-1))
+            mxKm=true
+            ggkm=ocn.mnGap
+        else
+            ggkm=Inf
         end
-        for j in ocn.osss
-            go_km=lof_pnt2pnt_dist(value.coord,j.coord)
-            mxKm=lof_mxMvKm(go_km,value,j)
-            gp_km=lof_pnt2pnt_dist(value.coord,lof_xClosestPcc(value,ocn.pccs).coord)
-            op_km=lof_pnt2pnt_dist(j.coord,lof_xClosestPcc(j,ocn.pccs).coord)
-            if (mxKm && gp_km+nos >= op_km && gpMin1Km <= op_km)
-                push!(ocn.gOarcs,lof_buildArc(value,j,go_km))
-            else
+            for j in ocn.osss
+                go_km=lof_pnt2pnt_dist(value.coord,j.coord)
+                if ggkm == Inf
+                    mxKm=lof_mxMvKm(go_km,value,j)
+                end
+                if (mxKm && go_km <= ggkm)
+                    push!(ocn.gOarcs,lof_buildArc(value,j,go_km))
+                else
+                end
             end
-        end
     end
 end
+#=function lof_GoArcs(ocn,cnt)
+    for (index, value) in enumerate(ocn.gens)
+            if (length(cnt.xXrad) < (length(ocn.gens)-1))
+                forKm=value.num-1
+                bacKm=value.num+1
+                mxKm=true
+            else
+                forKm=0
+                bacKm=Inf
+                mxKm=lof_mxMvKm(go_km,value,j)
+            end
+            for j in ocn.osss
+                go_km=lof_pnt2pnt_dist(value.coord,j.coord)
+                if (mxKm && j.upstrm >= forKm && j.dwnstrm <= bacKm)
+                    push!(ocn.gOarcs,lof_buildArc(value,j,go_km))
+                else
+                end
+            end
+    end
+end=#
 
 #Builds owpp to OSS path
 function lof_buildArc(tl,hd,km)
@@ -452,22 +539,30 @@ function lof_mxMvKm(l,gen,oss)
     return answer
 end
 
+function lof_divSizes(ocn)
+    ocn=ocean
+    div=lof_pnt2pnt_dist(ocn.gens[length(ocn.gens)].coord,ocn.gens[1].coord)/(length(ocn.gens)-1)
+    div2=lof_pnt2pnt_dist(ocn.gens[2].coord,ocn.gens[1].coord)
+end
 ################################################
 ##### generator to PCC connection paths ########
 ################################################
 #generator to Pcc connection
 function lof_GpArcs(ocn)
+    #shoreCon=findmax(cnt.xXrad)[1]+1
+    #cnct2pcc=ocn.gens[shoreCon]
     for i in ocn.gens
-        pcc_close=lof_xClosestPcc(i,ocn.pccs)
-        km=lof_pnt2pnt_dist(i.coord,pcc_close.coord)
-        mxKm=lof_mxMv2PccKm(km,i,pcc_close)
-        if mxKm
-            push!(ocn.gParcs,lof_buildArc(i,pcc_close,km))
-        else
-        end
+        #if i.num <= cnct2pcc.num
+            pcc_close=lof_xClosestPcc(i,ocn.pccs)
+            km=lof_pnt2pnt_dist(i.coord,pcc_close.coord)
+            #mxKm=lof_mxMv2PccKm(km,i,pcc_close)
+            mxKm=true
+            if mxKm
+                push!(ocn.gParcs,lof_buildArc(i,pcc_close,km))
+            end
+        #end
     end
 end
-
 
 #set maximum distance to connect the gens to pccs with MV cable
 function lof_mxMv2PccKm(l,gen,oss)
@@ -490,6 +585,29 @@ end
 ##########################################
 #OSS to OSS connection
 function lof_OoArcs(ocn,cnt)
+    ossCon=findmax(cnt.xXrad)[1]
+    mnKm=lod_mnKm()
+
+    for (index0, value0) in enumerate(ocn.osss)
+        if (length(cnt.xXrad) < length(ocn.gens)-1)
+            forKm=value0.upstrm-ossCon
+            bacKm=value0.dwnstrm-ossCon
+        else
+            forKm=0
+            bacKm=Inf
+            upKm=value0.dwnstrm
+        end
+
+        for j=(index0+1):length(ocn.osss)
+                km=lof_pnt2pnt_dist(value0.coord,ocn.osss[j].coord)
+                if mnKm <= km && ocn.osss[j].upstrm >= forKm && ocn.osss[j].dwnstrm <= bacKm
+                    push!(ocn.oOarcs,lof_buildArc(value0,ocn.osss[j],km))
+                else
+                end
+        end
+    end
+end
+#=function lof_OoArcs(ocn,cnt)
     ossCon=findmax(cnt.xXrad)[1]
     #makes all gen to pcc distances
     genDists=Array{Float64,1}()
@@ -526,24 +644,35 @@ function lof_OoArcs(ocn,cnt)
                 end
         end
     end
-end
+end=#
 
 ##########################################
 ##### OSS to PCC connection paths ########
 ##########################################
 #OSS to PCC connection
 function lof_OpArcs(ocn,cnt)
+    ops=Array{arc,1}()
+    for oss in ocn.osss
+        pcc_close=lof_xClosestPcc(oss,ocn.pccs)
+        op=arc()
+        op.head=pcc_close
+        op.tail=oss
+        op.lngth=lof_pnt2pnt_dist(oss.coord,pcc_close.coord)
+        push!(ops,op)
+    end
+    ocn.oParcs=ops
+end
+#=function lof_OpArcs(ocn,cnt)
     shoreCon=findmax(cnt.xXrad)[1]+1
     cnct2pcc=ocn.gens[shoreCon]
-    pcc_cncs=lof_xClosestPcc(cnct2pcc,ocn.pccs)
     for i in ocn.osss
-        pcc_close=lof_xClosestPcc(i,ocn.pccs)
-        if lof_pnt2pnt_dist(i.coord,pcc_close.coord)<lof_pnt2pnt_dist(cnct2pcc.coord,pcc_cncs.coord)
+        if i.dwnstrm <= cnct2pcc.num
+            pcc_close=lof_xClosestPcc(i,ocn.pccs)
             km=lof_pnt2pnt_dist(i.coord,pcc_close.coord)
             push!(ocn.oParcs,lof_buildArc(i,pcc_close,km))
         end
     end
-end
+end=#
 
 ################################################################################
 ############################ GPS to cartesian transform ########################
@@ -579,6 +708,9 @@ end
 function lof_transformAxis(ocn)
     offset=lof_rotateAxis(ocn)
     lof_slideAxis(ocn,offset)
+    num=length(ocn.pccs)
+    ocn.gens=lof_gensOrder(ocn.gens,ocn,num)
+    ocn.mnGap=lof_mnGap(ocn.gens)
 end
 
 #finds angle to rotate and applies to owpps and pccs
@@ -634,6 +766,20 @@ end
 #calculates length of 1 deg of longitude at given lattitude
 function lof_lg1deg(lat,lngth)
     return cos(lof_d2r(lat))*lngth
+end
+
+#finds minimum distance between any 2 owpp
+function lof_mnGap(gens)
+    lnths=Array{Float64,1}()
+    for gen0 in gens
+        for gen1 in gens
+            if gen0.id != gen1.id
+                push!(lnths,lof_pnt2pnt_dist(gen0.coord,gen1.coord))
+            end
+        end
+    end
+    mnGp=findmin(lnths)[1]
+    return mnGp
 end
 ################################################################################
 ############################ Cartesian to GPS transform ########################

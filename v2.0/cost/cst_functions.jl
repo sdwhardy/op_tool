@@ -2,6 +2,7 @@
 ################# Main Logic functions for cost of eqp #########################
 ################################################################################
 #Cost of HV connection between 2 OSS
+
 function cstF_HVcbl2oss(l,S,kv,wp)#3
     os=true#offshore to offshore connection
     cb=cstF_cbl_ttl(l,S,kv,wp,os)
@@ -66,7 +67,7 @@ function cstF_cbl_ttl(l,S,kv,wp,os)
     cb.costs.ttl=Inf#Initialize to very high total for comparison
     ks=cstD_cfs()#get the cost factors
     cbls_all=eqpF_cbl_opt(kv,cbls_all,l)#returns all base data available for kv cables
-    cbls_2use=eqpF_cbl_sel(cbls_all,S,l)#Selects 1 to ...(adjust in data) of the cables in parallel appropriate for reuired capacity
+    cbls_2use=eqpF_cbl_sel(cbls_all,S,l)#Selects 1 to ...(adjust in data) of the cables in parallel appropriate for required capacity
 
     for value in cbls_2use
         value.costs.cbc=cstF_cbl_cpx(value)#capex
@@ -200,6 +201,7 @@ function cstF_cblxfo_ttl(l,S,kv,wp,os)
     xfm=xfo()#create 1 object of type transformer
     xfm=cstF_xfo_ttl(S,wp,os)#get transformer sized with no cable
     cb.costs.ttl=Inf#Initialize cable to very high total for comparison
+    cb.costs.eens=Inf#Initialize cable to very high total for comparison
     ks=cstD_cfs()#get the cost factors
     cbls_all=eqpF_cbl_opt(kv,cbls_all,l)#returns all base data available for kv cables
     cbls_2use=eqpF_cbl_sel(cbls_all,S,l)#Selects 1 to 10 of the cables in parallel appropriate for reuired capacity
