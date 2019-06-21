@@ -64,7 +64,12 @@ mutable struct eez
       angle::Float64
       offset::Float64
       mnGap::Float64
-      oOcbls::Array{Tuple}          
+      oOcbls::Array{Tuple}
+      oPcbls::Array{Tuple}
+      oPXcbls::Array{Tuple}
+      gOcbls::Array{Tuple}
+      gPcbls::Array{Tuple}
+      dcCbls::Array{Tuple}
 end
-eez()=eez([],[],[],[],[],[],[],69.69,69.69,69.69,[])
+eez()=eez([],[],[],[],[],[],[],69.69,69.69,69.69,[],[],[],[],[],[])
 ###################################################################

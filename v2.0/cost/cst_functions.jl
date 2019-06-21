@@ -46,9 +46,9 @@ function cstF_MVcbl2pccX(l,S,kv,wp)#2
 end
 
 #Cost of DC line from OSS to PCC
-function cstF_DCcbl2pcc(l,S,wp,oss,gens)#6
+function cstF_DCcbl2pcc(l,S,wp,oss,gens,ocn)#6
     cbcn=cstF_dcCblCon_ttl(l,S,wp)
-    cstF_correctDc(cbcn,oss,gens)
+    cstF_correctDc(cbcn,oss,gens,ocn)
     rxb=eqpD_dcAdm()
     cbcn.cable.ohm=rxb[1]
     cbcn.cable.xl=rxb[2]
@@ -285,7 +285,7 @@ function cstF_dcCblCon_ttl(l,S,wp)
 end
 
 #Removes AC OSS cost if DC is used
-function cstF_correctDc(cbcn,oss,gens)
+function cstF_correctDc(cbcn,oss,gens,ocn)
     #makes all oss to gen distances
     genDists=Array{Float64,1}()
     mvConects=Array{Int64,1}()
@@ -294,7 +294,7 @@ function cstF_correctDc(cbcn,oss,gens)
     end
 
     for (index, value) in enumerate(genDists)
-        answer=cstF_mvConnect(value,gens[index],oss)
+        answer=cstF_mvConnect(value,gens[index],oss,ocn)
         if answer==true
             push!(mvConects,index)
         end
@@ -310,13 +310,12 @@ function cstF_correctDc(cbcn,oss,gens)
     cbcn.costs.ttl=cbcn.costs.ttl-(cstD_cfs().FC_ac*(length(gens)-length(mvConects)))
 end
 
-function cstF_mvConnect(l,gen,oss)
+function cstF_mvConnect(l,gen,oss,ocn)
     S=gen.mva
     mv=gen.kv
     hv=lod_ossKv()
-    wp=wndF_wndPrf([gen.name])
-    mvCbl=cstF_MVcbl2pccX(l,S,mv,wp).costs.ttl
-    hvCbl=cstF_HVcbl2oss(l-1,S,hv,wp).costs.ttl+cstF_MVcbl2ossX(1,S,mv,wp).costs.ttl-cstD_cfs().FC_ac
+    mvCbl=cstF_MVcbl2pccXChk(l,S,mv,[gen.name],ocn.gPcbls).costs.ttl
+    hvCbl=cstF_HVcbl2ossChk(l-1,S,hv,[gen.name],ocn.oOcbls).costs.ttl+cstF_MVcbl2ossXChk(1,S,mv,[gen.name],ocn.gOcbls).costs.ttl-cstD_cfs().FC_ac
     if mvCbl<=hvCbl
         answer=true
     else

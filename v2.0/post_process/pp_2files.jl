@@ -214,16 +214,15 @@ end
 function ppf_NeBrnchs(mf,mp,optLout,cnt)
 	ppf_HdrNeBrnch(mf)
 	println("Adding OWPP to PCC candidates...")
-	ppf_gpBrnch(mf,mp.gParcs,optLout)
+	ppf_gpBrnch(mf,mp.gParcs,optLout,mp.gPcbls)
 	println("Adding OWPP to OSS candidates...")
-	ppf_goBrnch(mf,mp.gOarcs,optLout)
+	ppf_goBrnch(mf,mp.gOarcs,optLout,mp.gOcbls)
 	println("Adding OSS to OSS candidates...")
 	ppf_ooBrnch(mf,mp.oOarcs,optLout,mp.oOcbls)
 	println("Adding OSS to PCC candidates...")
-	ppf_opBrnch(mf,mp.oParcs,optLout,cnt)
+	ppf_opBrnch(mf,mp.oParcs,optLout,cnt,mp.oPcbls,mp.oPXcbls)
 	println("Adding DC candidates...")
 	ppf_dcBrnch(mf,mp,optLout)
-	#ppf_dcSlvable(mf,mp,optLout)
 	println(mf, "];")
 end
 
@@ -237,10 +236,9 @@ end
 ###########################
 ####### Gen to PCC ########
 #OWPP to PCC candidate branches
-function ppf_gpBrnch(mf,gParcs,optLout)
+function ppf_gpBrnch(mf,gParcs,optLout,gPcbls)
 	for path in gParcs
-		wp=wndF_wndPrf([path.tail.name])
-		link=cstF_MVcbl2pccX(path.lngth,path.tail.mva,path.tail.kv,wp)
+		link=cstF_MVcbl2pccXChk(path.lngth,path.tail.mva,path.tail.kv,[path.tail.name],gPcbls)
 		ppf_ifUnderSized(link.cable,path.tail.mva,path.tail.kv,path.lngth)
 		if link.cable.num != 0
 			ppf_candiBrnch(mf,link,path,optLout)
@@ -250,13 +248,31 @@ function ppf_gpBrnch(mf,gParcs,optLout)
 	end
 end
 
+function cstF_MVcbl2pccXChk(lngth,mva,kv,wnds,gPcbls)
+	link=owpp()
+	lngth=round(Int64,lngth*10)
+	lth=lngth/10.0
+	eyeD=string(lngth)*string(mva)
+	ids=[x[1] for x in gPcbls]
+	for (index,value) in enumerate(ids)
+		if string(eyeD) == string(value)
+			link=gPcbls[index][2]
+			println("known MV Pcc Cable"*string(lngth)*string(mva))
+			@goto mvpcc_chk
+		end
+	end
+	wp=wndF_wndPrf(wnds)
+	link=cstF_MVcbl2pccX(lth,mva,kv,wp)
+	push!(gPcbls,(eyeD,link))
+	@label mvpcc_chk
+	return link
+end
 ###########################
 ####### Gen to OSS ########
 #OWPP to OSS candidate branches
-function ppf_goBrnch(mf,gOarcs,optLout)
+function ppf_goBrnch(mf,gOarcs,optLout,gOcbls)
 	for path in gOarcs
-		wp=wndF_wndPrf([path.tail.name])
-		link=cstF_MVcbl2ossX(path.lngth,path.tail.mva,path.tail.kv,wp)
+		link=cstF_MVcbl2ossXChk(path.lngth,path.tail.mva,path.tail.kv,[path.tail.name],gOcbls)
 		ppf_ifUnderSized(link.cable,path.tail.mva,path.tail.kv,path.lngth)
 		if link.cable.num != 0
 			ppf_candiBrnch(mf,link,path,optLout)
@@ -266,6 +282,25 @@ function ppf_goBrnch(mf,gOarcs,optLout)
 	end
 end
 
+function cstF_MVcbl2ossXChk(lngth,mva,kv,wnds,gOcbls)
+	link=owpp()
+	lngth=round(Int64,lngth*10)
+	lth=lngth/10.0
+	eyeD=string(lngth)*string(mva)
+	ids=[x[1] for x in gOcbls]
+	for (index,value) in enumerate(ids)
+		if string(eyeD) == string(value)
+			link=gOcbls[index][2]
+			println("known MV Oss Cable"*string(lngth)*string(mva))
+			@goto mvoss_chk
+		end
+	end
+	wp=wndF_wndPrf(wnds)
+	link=cstF_MVcbl2ossX(lth,mva,kv,wp)
+	push!(gOcbls,(eyeD,link))
+	@label mvoss_chk
+	return link
+end
 ###########################
 ####### OSS to OSS ########
 #OWPP to OSS candidate branches
@@ -273,8 +308,7 @@ function ppf_ooBrnch(mf,oOarcs,optLout,oOcbls)
 	link=owpp()
 	for path in oOarcs
 		#Adds half sized cable
-		wp=wndF_wndPrf([path.tail.wnds[1]])
-		cable=cstF_HVcbl2ossChk(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),wp,oOcbls)
+		cable=cstF_HVcbl2ossChk(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),[path.tail.wnds[1]],oOcbls)
 		ppf_ifUnderSized(cable,path.tail.mvas[1]/2,lod_ossKv(),path.lngth)
 		link.cable=cable
 		link.costs.ttl=cable.costs.ttl
@@ -291,9 +325,7 @@ function ppf_ooBrnch(mf,oOarcs,optLout,oOcbls)
 		for j=1:length(path.tail.mvas)
 			mva=mva+path.tail.mvas[j]
 			push!(ka,path.tail.wnds[j])
-			wp=wndF_wndPrf(ka)
-
-			cable=cstF_HVcbl2ossChk(path.lngth,mva,lod_ossKv(),wp,oOcbls)
+			cable=cstF_HVcbl2ossChk(path.lngth,mva,lod_ossKv(),ka,oOcbls)
 			ppf_ifUnderSized(cable,mva,lod_ossKv(),path.lngth)
 			link.cable=cable
 			link.costs.ttl=cable.costs.ttl
@@ -307,18 +339,21 @@ function ppf_ooBrnch(mf,oOarcs,optLout,oOcbls)
 end
 
 #Checks required cable against already stored, if it does not exist it is calculated
-function cstF_HVcbl2ossChk(lngth,mva,kv,wp,oOcbls)
+function cstF_HVcbl2ossChk(lngth,mva,kv,wnds,oOcbls)
 	cable=cbl()
-	lngth=round(Int64,lngth)
+	lngth=round(Int64,lngth*10)
+	lth=lngth/10.0
 	eyeD=string(lngth)*string(mva)
 	ids=[x[1] for x in oOcbls]
 	for (index,value) in enumerate(ids)
 		if string(eyeD) == string(value)
 			cable=oOcbls[index][2]
+			println("knownCable"*string(lngth)*string(mva))
 			@goto hv_chk
 		end
 	end
-	cable=cstF_HVcbl2oss(lngth,mva,kv,wp)
+	wp=wndF_wndPrf(wnds)
+	cable=cstF_HVcbl2oss(lth,mva,kv,wp)
 	push!(oOcbls,(eyeD,cable))
 	@label hv_chk
 	return cable
@@ -326,7 +361,7 @@ end
 ###########################
 ####### OSS to PCC ########
 #OSS to PCC candidate branches
-function ppf_opBrnch(mf,oParcs,optLout,cnt)
+function ppf_opBrnch(mf,oParcs,optLout,cnt,oPcbls,oPXcbls)
 	link=owpp()
 	if length(oParcs) != 0
 		mva=sum(oParcs[1].tail.mvas)
@@ -334,12 +369,11 @@ function ppf_opBrnch(mf,oParcs,optLout,cnt)
 	for path in oParcs
 		if length(cnt.xXrad) != 1
 			#Adds a partially sized cable
-			wp=wndF_wndPrf([path.tail.wnds[1]])
 			if lod_ossKv() == lod_pccKv()
-				cable=cstF_HVcbl2pcc(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),wp)
+				cable=cstF_HVcbl2pccChk(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),[path.tail.wnds[1]],oPcbls)
 				link.cable=cable
 			else
-				link=cstF_HVcbl2pccX(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),wp)
+				link=cstF_HVcbl2pccXChk(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),[path.tail.wnds[1]],oPXcbls)
 			end
 			ppf_ifUnderSized(link.cable,path.tail.mvas[1]/2,lod_ossKv(),path.lngth)
 			link.costs.ttl=cable.costs.ttl
@@ -355,12 +389,11 @@ function ppf_opBrnch(mf,oParcs,optLout,cnt)
 			for j=1:length(path.tail.mvas)
 				mva=mva+path.tail.mvas[j]
 				push!(ka,path.tail.wnds[j])
-				wp=wndF_wndPrf(ka)
 				if lod_ossKv() == lod_pccKv()
-					cable=cstF_HVcbl2pcc(path.lngth,mva,lod_ossKv(),wp)
+					cable=cstF_HVcbl2pccChk(path.lngth,mva,lod_ossKv(),ka,oPcbls)
 					link.cable=cable
 				else
-					link=cstF_HVcbl2pccX(path.lngth,mva,lod_ossKv(),wp)
+					link=cstF_HVcbl2pccXChk(path.lngth,mva,lod_ossKv(),ka,oPXcbls)
 				end
 				ppf_ifUnderSized(link.cable,mva,lod_ossKv(),path.lngth)
 				link.costs.ttl=cable.costs.ttl
@@ -373,12 +406,11 @@ function ppf_opBrnch(mf,oParcs,optLout,cnt)
 		else
 			lrgFnd = false
 			while lrgFnd == false && mva>path.tail.mvas[1]
-				wp=wndF_wndPrf(path.tail.wnds)
 				if lod_ossKv() == lod_pccKv()
-					cable=cstF_HVcbl2pcc(path.lngth,mva,lod_ossKv(),wp)
+					cable=cstF_HVcbl2pccChk(path.lngth,mva,lod_ossKv(),path.tail.wnds,oPcbls)
 					link.cable=cable
 				else
-					link=cstF_HVcbl2pccX(path.lngth,mva,lod_ossKv(),wp)
+					link=cstF_HVcbl2pccXChk(path.lngth,mva,lod_ossKv(),path.tail.wnds,oPXcbls)
 				end
 				ppf_ifUnderSized(link.cable,mva,lod_ossKv(),path.lngth)
 				link.costs.ttl=cable.costs.ttl
@@ -394,9 +426,48 @@ function ppf_opBrnch(mf,oParcs,optLout,cnt)
 	end
 end
 
+function cstF_HVcbl2pccChk(lngth,mva,kv,wnds,oPcbls)
+	cable=cbl()
+	lngth=round(Int64,lngth*10)
+	lth=lngth/10.0
+	eyeD=string(lngth)*string(mva)
+	ids=[x[1] for x in oPcbls]
+	for (index,value) in enumerate(ids)
+		if string(eyeD) == string(value)
+			cable=oPcbls[index][2]
+			println("known HV pcc Cable "*string(lngth)*string(mva))
+			@goto hvpcc_chk
+		end
+	end
+	wp=wndF_wndPrf(wnds)
+	cable=cstF_HVcbl2pcc(lth,mva,kv,wp)
+	push!(oPcbls,(eyeD,cable))
+	@label hvpcc_chk
+	return cable
+end
+
+function cstF_HVcbl2pccXChk(lngth,mva,kv,wnds,oPXcbls)
+	link=owpp()
+	lngth=round(Int64,lngth*10)
+	lth=lngth/10.0
+	eyeD=string(lngth)*string(mva)
+	ids=[x[1] for x in oPXcbls]
+	for (index,value) in enumerate(ids)
+		if string(eyeD) == string(value)
+			link=oPXcbls[index][2]
+			println("known HV Pcc Cable+Xfm"*string(lngth)*string(mva))
+			@goto hvpccx_chk
+		end
+	end
+	wp=wndF_wndPrf(wnds)
+	link=cstF_HVcbl2pccX(lth,mva,kv,wp)
+	push!(oPXcbls,(eyeD,link))
+	@label hvpccx_chk
+	return link
+end
 ###########################
 ######## DC Lines #########
-function ppf_dcSlvable(mf,mp,optLout)
+#=function ppf_dcSlvable(mf,mp,optLout)
 	for oss in mp.osss
 		match=false
 		for oP in mp.oParcs
@@ -426,30 +497,58 @@ function ppf_dcSlvable(mf,mp,optLout)
 			end
 		end
 	end
-end
+end=#
 
 #DC candidate branches
 function ppf_dcBrnch(mf,mp,optLout)
 	Ss,wnds=lod_gensGps()[2:3]
 	gens=mp.gens
+	oPXcbls=mp.oPXcbls
+	dcCbls=mp.dcCbls
+	gOcbls=mp.gOcbls
+	S=Float64(sum(mp.oParcs[length(mp.oParcs)].tail.mvas))
 	for path in mp.oParcs
-		S=Float64(sum(path.tail.mvas))
-		wp=wndF_wndPrf(wnds)
-		link=cstF_DCcbl2pcc(path.lngth,S,wp,path.tail,gens)
-		acLink=cstF_HVcbl2pccX(path.lngth,S,lod_ossKv(),wp)
-		ppf_ifUnderSized(link.cable,S,link.cable.volt,path.lngth)
-		if link.cable.num != 0 && link.costs.ttl<acLink.costs.ttl
-			dcPath=arc()
-			dcPath=deepcopy(path)
-			dcPath.head.num=mp.osss[length(mp.osss)].num+1
-			dcPath.head.id="90"*string(dcPath.head.num)
-			ppf_candiBrnch(mf,link,dcPath,optLout)
+		if S == Float64(sum(path.tail.mvas))
+			link=cstF_DCcbl2pccChk(path.lngth,S,wnds,path.tail,gens,dcCbls,mp)
+			println("DC line "*string(S)*" costs "*string(link.costs.ttl))
+			acLink=cstF_HVcbl2pccXChk(path.lngth,S,lod_ossKv(),wnds,oPXcbls)
+			println("AC line "*string(S)*" costs "*string(acLink.costs.ttl))
+			ppf_ifUnderSized(link.cable,S,link.cable.volt,path.lngth)
+			if link.cable.num != 0 && link.costs.ttl<acLink.costs.ttl
+				dcPath=arc()
+				dcPath=deepcopy(path)
+				dcPath.head.num=mp.osss[length(mp.osss)].num+1
+				dcPath.head.id="90"*string(dcPath.head.num)
+				ppf_candiBrnch(mf,link,dcPath,optLout)
+				println("Candidate HVDC line added to OSS "*string(path.tail.num))
+			else
+				println("DC connection not suitable for "*string(S)*"MVA, "*string(trunc(Int,path.lngth))*"Km. -removing")
+			end
 		else
-			println("DC connection not suitable for "*string(S)*"MVA, "*string(trunc(Int,path.lngth))*"Km. -removing")
+			println("Transmission too small for HVDC line.")
 		end
 	end
 end
 
+function cstF_DCcbl2pccChk(lngth,mva,wnds,tail,gens,dcCbls,ocn)
+	link=owpp()
+	lngth=round(Int64,lngth*10)
+	lth=lngth/10.0
+	eyeD=string(lngth)*string(mva)
+	ids=[x[1] for x in dcCbls]
+	for (index,value) in enumerate(ids)
+		if string(eyeD) == string(value)
+			link=dcCbls[index][2]
+			println("known DC Cable+Con"*string(lngth)*string(mva))
+			@goto hvDC_chk
+		end
+	end
+	wp=wndF_wndPrf(wnds)
+	link=cstF_DCcbl2pcc(lth,mva,wp,tail,gens,ocn)
+	push!(dcCbls,(eyeD,link))
+	@label hvDC_chk
+	return link
+end
 ###########################################
 ###### Candidate Support Functions ########
 #Slightly undersized cables are allowed to be overloaded

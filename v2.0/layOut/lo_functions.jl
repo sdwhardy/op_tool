@@ -2,7 +2,7 @@
 ########################### Main layout logic ##################################
 ################################################################################
 function lof_layoutEez(cnt)
-    #,./cnt=lpd_fullProbSetUp()[3][1]
+    cnt=lpd_fullProbSetUp()[3][1]
     ocean=eez()#build the eez in the ocean
     ocean.pccs=lof_layPccs()#add the gps of PCCs
     println("PCCs positioned at:")
@@ -28,7 +28,7 @@ function lof_layoutEez(cnt)
     lof_transformAxis(ocean)
     println("Axis transformed.")
     lof_osss(ocean,cnt)#add all osss within boundary
-    println("OWPPs positioned at:")
+    println("OSSs positioned at:")
     for value in ocean.osss
         print(value.num)
         print(" - ")
@@ -584,14 +584,58 @@ end
 ##### OSS to OSS connection paths ########
 ##########################################
 #OSS to OSS connection
+#=function lof_OoArcs(ocn,cnt)
+    mnKm=lod_mnKm()#minimum connection distance
+    gens=reverse(ocn.gens,1)
+    if (length(cnt.xXrad) < length(gens)-1)#apply for setup milps only
+        println(ocn.mnGap)
+        mnggGapf=ocn.mnGap/2
+        mnggGapb=ocn.mnGap/4
+        jump=cnt.xXrad[1]
+        for (genfrmI, genfrm) in enumerate(gens[1:length(gens)-(jump+1)])
+            gen1_pcc=lof_xClosestPcc(genfrm,ocn.pccs)
+            gokm_mx=lof_pnt2pnt_dist(genfrm.coord,gen1_pcc.coord)
+            gen2_pcc=lof_xClosestPcc(gens[genfrmI+1],ocn.pccs)
+            gokm_mn=lof_pnt2pnt_dist(gens[genfrmI+1].coord,gen2_pcc.coord)
+            #gokm_mx=gokm+mnggGapf#upper bound for distance to PCC for from oss
+            #gokm_mn=gokm-mnggGapb#lower bound for distance to PCC for from oss
+            println("goGap: "*string(gokm_mn)*" - "*string(gokm_mx))
+
+            gentoc=gens[genfrmI+jump]
+            gentof=gens[genfrmI+jump+1]
+            gen3_pcc=lof_xClosestPcc(gentoc,ocn.pccs)
+            gen4_pcc=lof_xClosestPcc(gentof,ocn.pccs)
+            go2km_mx=lof_pnt2pnt_dist(gentoc.coord,gen3_pcc.coord)
+            go2km_mn=lof_pnt2pnt_dist(gentof.coord,gen4_pcc.coord)
+            #go2km_mx=ggkm1+ggkm2#upper bound for distance to oss for from oss
+            #go2km_mn=ggkm1#lower bound for distance to oss for from oss
+            println("ggGap: "*string(go2km_mn)*" - "*string(go2km_mx))
+            for (ossfrmI, ossfrm) in enumerate(ocn.osss)
+                oss1_pcc=lof_xClosestPcc(ossfrm,ocn.pccs)
+                opkm1=lof_pnt2pnt_dist(ossfrm.coord,oss1_pcc.coord)
+                if opkm1 >= gokm_mn && opkm1 <= gokm_mx
+                    for (osstoI, ossto) in enumerate(ocn.osss[ossfrmI:length(ocn.osss)])
+                        oss2_pcc=lof_xClosestPcc(ossto,ocn.pccs)
+                        opkm2=lof_pnt2pnt_dist(ossto.coord,oss2_pcc.coord)
+                        ookm=lof_pnt2pnt_dist(ossfrm.coord,ossto.coord)
+                        if ((opkm2 <= go2km_mx) && (opkm2 >= go2km_mn) && (ookm >= mnKm))
+                            push!(ocn.oOarcs,lof_buildArc(ossfrm,ossto,ookm))
+                        end
+                    end
+                end
+            end
+        end
+    else
+    end
+end=#
 function lof_OoArcs(ocn,cnt)
     ossCon=findmax(cnt.xXrad)[1]
     mnKm=lod_mnKm()
 
     for (index0, value0) in enumerate(ocn.osss)
         if (length(cnt.xXrad) < length(ocn.gens)-1)
-            forKm=value0.upstrm-ossCon
-            bacKm=value0.dwnstrm-ossCon
+            forKm=value0.upstrm-1
+            bacKm=value0.dwnstrm-1
         else
             forKm=0
             bacKm=Inf

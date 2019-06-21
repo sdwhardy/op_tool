@@ -39,9 +39,41 @@ solution=lpf_buildFnlMilp(solutions)
 #ppf_printOcnGPS(solution[1])
 solution=load("v2.0/results/partial_sols/n_1.jld")
 plotly()
-ppf_printOcnXY(solution["asBuilt"])
+ppf_printOcnXY(solutions[4][4])
 #=println(solution["objective"])
 wp=wndF_wndPrf(lod_gensGps()[3])
 xc=cstF_xfo_ttl(750,wp,true)
 xc3=cstF_xfo_ttl(250,wp,true)
 println(xc.costs.ttl-2*xc3.costs.ttl)=#
+function costTst(known_cables)
+    num=1
+    matfile = open("v2.0/results/test.mat","w")
+    for S=500:500:1000
+        for l=25:1:30
+            kv=220
+            nmes=lod_gensGps()[3]
+            eyeD=string(S)*string(l)
+            for (index,value) in enumerate(known_cables)
+                if (string(eyeD) == string(value[1]))
+                    println(matfile,"known cable: "*eyeD)
+                    println("known cable")
+                    cb=value[2]
+                    @goto costTest
+                end
+            end
+            nmes=lod_gensGps()[3]
+            wp=wndF_wndPrf(nmes)
+            cb=cstF_HVcbl2oss(l,S,kv,wp)
+            tup=deepcopy((eyeD,cb))
+            push!(known_cables,tup)
+            println(matfile,"Unknown cable: "*eyeD)
+            @label costTest
+            println(string(num)*" cost of "*string(S)*"MVA at "*string(l)*"km is "*string(cb.costs.ttl))
+            num=num+1
+        end
+    end
+    close(matfile)
+    return known_cables
+end
+known_cs=[]
+known_cs=costTst(known_cs)

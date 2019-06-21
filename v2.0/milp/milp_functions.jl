@@ -7,7 +7,7 @@ function milp_main(nme)
     network_data = PowerModels.parse_file(filename)
     return result, network_data
 end
-
+#cntrl=cntrls[2]
 #Runs multiple set up milps to sety up final problem
 function lpf_buildsetUpMilp()
     optMaps=Array{eez,1}()
@@ -18,6 +18,22 @@ function lpf_buildsetUpMilp()
     optLout,mxObj,cntrls=lpd_fullProbSetUp()
     for cntrl in cntrls
         domain=lof_layoutEez(cntrl)
+        if length(solutions[1]) != 0
+            domain.oOcbls=solutions[4][length(solutions[4])].oOcbls
+            domain.oPcbls=solutions[4][length(solutions[4])].oPcbls
+            domain.oPXcbls=solutions[4][length(solutions[4])].oPXcbls
+            domain.gOcbls=solutions[4][length(solutions[4])].gOcbls
+            domain.gPcbls=solutions[4][length(solutions[4])].gPcbls
+            domain.dcCbls=solutions[4][length(solutions[4])].dcCbls
+        else
+            solut=load("v2.0/results/partial_sols_finalCorkrun/n_7.jld")["domain"]
+            domain.oOcbls=solut.oOcbls
+            domain.oPcbls=solut.oPcbls
+            domain.oPXcbls=solut.oPXcbls
+            domain.gOcbls=solut.gOcbls
+            domain.gPcbls=solut.gPcbls
+            domain.dcCbls=solut.dcCbls
+        end
         ppf_main2mfile(domain,optLout,mxObj,cntrl)
         solution,nw_data=milp_main("milp")
         asBuilt,optIds=ppm_reCnstrctSol(solution,nw_data,domain)

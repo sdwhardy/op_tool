@@ -22,7 +22,11 @@ function eqpD_MAXcbls(kv)
     if kv == 33 || kv == 66
         pll=12
     else
-        pll=12
+        if lod_Belgium()==true
+            pll=12
+        else
+            pll=15
+        end
     end
     return pll
 end
