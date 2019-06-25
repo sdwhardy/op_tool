@@ -33,11 +33,57 @@ include("milp/milp_functions.jl")#milp
 include("post_process/pp_2screen.jl")#post processing
 include("post_process/pp_2files.jl")#post processing
 include("post_process/pp_milp.jl")#post processing
+optMaps=Array{eez,1}()
+optObjs=Array{Float64,1}()
+optIds=Array{Array{Int64,1},1}()
+domains=Array{eez,1}()
+solutions=(optMaps,optObjs,optIds,domains)
+for i=1:17
+    solution=load("v2.0/results/partial_sols/n_"*string(i)*".jld")
+    push!(optMaps,solution["asBuilt"])
+    push!(domains,solution["domain"])
+    push!(optObjs,solution["objective"])
+end
 
-solutions=lpf_buildsetUpMilp()
+optMapsMp=Array{eez,1}()
+optObjsMp=Array{Float64,1}()
+optIdsMp=Array{Array{Int64,1},1}()
+domainsMp=Array{eez,1}()
+solutionsMp=(optMapsMp,optObjsMp,optIdsMp,domainsMp)
+for i=1:1:length(solutions)-1
+    optMapsMpA=Array{eez,1}()
+    optObjsMpA=Array{Float64,1}()
+    optIdsMpA=Array{Array{Int64,1},1}()
+    domainsMpA=Array{eez,1}()
+
+    nID=string(i)*string(i+1)
+    push!(optMapsMpA,solutions[1][i])
+    push!(optMapsMpA,solutions[1][i+1])
+
+    push!(optObjsMpA,solutions[2][i])
+    push!(optObjsMpA,solutions[2][i+1])
+
+    push!(optIdsMpA,[])
+    push!(optIdsMpA,[])
+
+    push!(domainsMpA,solutions[4][i])
+    push!(domainsMpA,solutions[4][i+1])
+    solutionsMpA=(optMapsMpA,optObjsMpA,optIdsMpA,domainsMpA)
+
+    push!(solutionsMp,lpf_buildMidMilp(solutionsMpA,nID))
+end
+
 solution=lpf_buildFnlMilp(solutions)
+solutions=lpf_buildsetUpMilp()
 #ppf_printOcnGPS(solution[1])
+<<<<<<< HEAD
 solution=load("v2.0/results/33kv220kv/n_1.jld")
+=======
+
+
+
+solution=
+>>>>>>> 7280fa4894d55133ede8aa629f3ff1d5759d3655
 plotly()
 ppf_printOcnXY(solution["asBuilt"])
 #=println(solution["objective"])

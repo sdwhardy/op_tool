@@ -1,8 +1,12 @@
 #Calls Power Models on the input file
-function milp_main(nme)
+function milp_main(nme,time)
     filename="v2.0/results/"*nme*".m"
     mv("v2.0/results/tnep_map.mat", filename, force=true)
+<<<<<<< HEAD
     solver=GurobiSolver(Presolve=1, TimeLimit=20000.0)
+=======
+    solver=GurobiSolver(Presolve=1, TimeLimit=time)
+>>>>>>> 7280fa4894d55133ede8aa629f3ff1d5759d3655
     result = run_tnep(filename, DCPPowerModel, solver)
     network_data = PowerModels.parse_file(filename)
     return result, network_data
@@ -26,10 +30,14 @@ function lpf_buildsetUpMilp()
             domain.gPcbls=solutions[4][length(solutions[4])].gPcbls
             domain.dcCbls=solutions[4][length(solutions[4])].dcCbls
         else
+<<<<<<< HEAD
             solut=load("v2.0/results/n_7a.jld")["domain"]
             solut.gOcbls=[]
             solut.gPcbls=[]
             solut.dcCbls=[]
+=======
+            solut=load("v2.0/results/partial_sols/n_1.jld")["domain"]
+>>>>>>> 7280fa4894d55133ede8aa629f3ff1d5759d3655
             domain.oOcbls=solut.oOcbls
             domain.oPcbls=solut.oPcbls
             domain.oPXcbls=solut.oPXcbls
@@ -38,7 +46,7 @@ function lpf_buildsetUpMilp()
             #domain.dcCbls=solut.dcCbls
         end
         ppf_main2mfile(domain,optLout,mxObj,cntrl)
-        solution,nw_data=milp_main("milp")
+        solution,nw_data=milp_main("milp",20000)
         asBuilt,optIds=ppm_reCnstrctSol(solution,nw_data,domain)
         asBuilt.pccs=lof_reOrderNodes(asBuilt.pccs)
         asBuilt.gens=lof_reOrderNodes(asBuilt.gens)
@@ -49,7 +57,11 @@ function lpf_buildsetUpMilp()
         push!(solutions[2],solution["objective"])
         push!(solutions[3],optIds)
         push!(solutions[4],domain)
+<<<<<<< HEAD
         save("v2.0/results/33kv220kv/n_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"], "domain", domain)
+=======
+        save("v2.0/results/partial_sols/n_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"],"optIds",optIds,"domain", domain)
+>>>>>>> 7280fa4894d55133ede8aa629f3ff1d5759d3655
     end
     return solutions
 end
@@ -59,18 +71,40 @@ function lpf_buildFnlMilp(solutions)
     optLout,mxObj,cntrl=lpd_fnlProbSetUp()
     (value,index)=findmin(solutions[2])
     mxObj=ceil(Int64,value)
-    optLout=solutions[3][index]
+    #optLout=solutions[3][index]
+    optLout=[]
     domain=lof_layoutEez_Sum(solutions,cntrl)
     domain.angle=solutions[4][1].angle
     domain.offset=solutions[4][1].offset
     ppf_main2mfile(domain,optLout,mxObj,cntrl)
-    solution,nw_data=milp_main("milp")
+    solution,nw_data=milp_main("milp",70000)
     asBuilt,Ids=ppm_reCnstrctSol(solution,nw_data,domain)
     asBuilt.pccs=lof_reOrderNodes(asBuilt.pccs)
     asBuilt.gens=lof_reOrderNodes(asBuilt.gens)
     asBuilt.osss=lof_reOrderNodes(asBuilt.osss)
     asBuilt.angle=solutions[4][1].angle
     asBuilt.offset=solutions[4][1].offset
-    save("v2.0/results/partial_sols/final.jld", "asBuilt", asBuilt,"objective",solution["objective"], "domain", domain)
+    save("v2.0/results/partial_sols/final.jld", "asBuilt", asBuilt,"objective","optIds",optIds,solution["objective"], "domain", domain)
+    return (asBuilt,solution["objective"],Ids,domain)
+end
+
+function lpf_buildMidMilp(solutions,nID)
+    optLout,mxObj,cntrl=lpd_fnlProbSetUp()
+    (value,index)=findmin(solutions[2])
+    mxObj=ceil(Int64,value)
+    #optLout=solutions[3][index]
+    optLout=[]
+    domain=lof_layoutEez_Sum(solutions,cntrl)
+    domain.angle=solutions[4][1].angle
+    domain.offset=solutions[4][1].offset
+    ppf_main2mfile(domain,optLout,mxObj,cntrl)
+    solution,nw_data=milp_main("milp",20000)
+    asBuilt,Ids=ppm_reCnstrctSol(solution,nw_data,domain)
+    asBuilt.pccs=lof_reOrderNodes(asBuilt.pccs)
+    asBuilt.gens=lof_reOrderNodes(asBuilt.gens)
+    asBuilt.osss=lof_reOrderNodes(asBuilt.osss)
+    asBuilt.angle=solutions[4][1].angle
+    asBuilt.offset=solutions[4][1].offset
+    save("v2.0/results/mid_sols/mid"*nID*".jld", "asBuilt", asBuilt,"objective","optIds",optIds,solution["objective"], "domain", domain)
     return (asBuilt,solution["objective"],Ids,domain)
 end

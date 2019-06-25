@@ -8,7 +8,11 @@ function lpd_fullProbSetUp()
     objmin=10000
     cntrls=Array{control,1}()
     cntrl=control()
+<<<<<<< HEAD
     neibs=[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18]]
+=======
+    neibs=[[2],[3],[4],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18]]
+>>>>>>> 7280fa4894d55133ede8aa629f3ff1d5759d3655
     for neib in neibs
         cntrl=control()
         cntrl.xrad=true
