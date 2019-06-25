@@ -2,12 +2,12 @@
 function milp_main(nme)
     filename="v2.0/results/"*nme*".m"
     mv("v2.0/results/tnep_map.mat", filename, force=true)
-    solver=GurobiSolver(Presolve=1, TimeLimit=25000.0)
+    solver=GurobiSolver(Presolve=1, TimeLimit=20000.0)
     result = run_tnep(filename, DCPPowerModel, solver)
     network_data = PowerModels.parse_file(filename)
     return result, network_data
 end
-#cntrl=cntrls[2]
+
 #Runs multiple set up milps to sety up final problem
 function lpf_buildsetUpMilp()
     optMaps=Array{eez,1}()
@@ -26,13 +26,16 @@ function lpf_buildsetUpMilp()
             domain.gPcbls=solutions[4][length(solutions[4])].gPcbls
             domain.dcCbls=solutions[4][length(solutions[4])].dcCbls
         else
-            solut=load("v2.0/results/partial_sols_finalCorkrun/n_7.jld")["domain"]
+            solut=load("v2.0/results/n_7a.jld")["domain"]
+            solut.gOcbls=[]
+            solut.gPcbls=[]
+            solut.dcCbls=[]
             domain.oOcbls=solut.oOcbls
             domain.oPcbls=solut.oPcbls
             domain.oPXcbls=solut.oPXcbls
-            domain.gOcbls=solut.gOcbls
-            domain.gPcbls=solut.gPcbls
-            domain.dcCbls=solut.dcCbls
+            #domain.gOcbls=solut.gOcbls
+            #domain.gPcbls=solut.gPcbls
+            #domain.dcCbls=solut.dcCbls
         end
         ppf_main2mfile(domain,optLout,mxObj,cntrl)
         solution,nw_data=milp_main("milp")
@@ -46,7 +49,7 @@ function lpf_buildsetUpMilp()
         push!(solutions[2],solution["objective"])
         push!(solutions[3],optIds)
         push!(solutions[4],domain)
-        save("v2.0/results/partial_sols/n_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"], "domain", domain)
+        save("v2.0/results/33kv220kv/n_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"], "domain", domain)
     end
     return solutions
 end

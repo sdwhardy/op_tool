@@ -257,7 +257,7 @@ function cstF_MVcbl2pccXChk(lngth,mva,kv,wnds,gPcbls)
 	for (index,value) in enumerate(ids)
 		if string(eyeD) == string(value)
 			link=gPcbls[index][2]
-			println("known MV Pcc Cable"*string(lngth)*string(mva))
+			println("known MV Pcc Cable "*string(lngth)*string(mva))
 			@goto mvpcc_chk
 		end
 	end
@@ -291,7 +291,7 @@ function cstF_MVcbl2ossXChk(lngth,mva,kv,wnds,gOcbls)
 	for (index,value) in enumerate(ids)
 		if string(eyeD) == string(value)
 			link=gOcbls[index][2]
-			println("known MV Oss Cable"*string(lngth)*string(mva))
+			println("known MV Oss Cable "*string(lngth)*string(mva))
 			@goto mvoss_chk
 		end
 	end

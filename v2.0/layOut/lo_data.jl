@@ -187,7 +187,7 @@ end
 
 #set collector voltage
 function lod_cncsKv()
-    return 66.0
+    return 33.0
 end
 
 #Grid PU mva
