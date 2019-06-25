@@ -2,7 +2,7 @@
 ########################### Main layout logic ##################################
 ################################################################################
 function lof_layoutEez(cnt)
-    cnt=lpd_fullProbSetUp()[3][1]
+    #cnt=lpd_fullProbSetUp()[3][1]
     ocean=eez()#build the eez in the ocean
     ocean.pccs=lof_layPccs()#add the gps of PCCs
     println("PCCs positioned at:")
@@ -42,6 +42,19 @@ end
 #Mian logic for final milp set up
 function lof_layoutEez_Sum(solutions,cntrl)
     ocean=lof_layoutEez_nodes(solutions,cntrl)
+    ocean.oOcbls=solutions[4][length(solutions[4])].oOcbls
+    ocean.oPcbls=solutions[4][length(solutions[4])].oPcbls
+    ocean.oPXcbls=solutions[4][length(solutions[4])].oPXcbls
+    ocean.gOcbls=solutions[4][length(solutions[4])].gOcbls
+    ocean.gPcbls=solutions[4][length(solutions[4])].gPcbls
+    ocean.dcCbls=solutions[4][length(solutions[4])].dcCbls
+    println("Node Layout Complete!")
+    println(string(length(ocean.osss))*" OSSs positioned at:")
+    for value in ocean.osss
+        print(value.num)
+        print(" - ")
+        println(value.coord)
+    end
     lof_layoutEez_arcs(ocean,cntrl)
     return ocean
 end
@@ -81,10 +94,10 @@ function lof_uniqueNodes(ocn,nds,num)
                 nd.num=deepcopy(num)
                 push!(ocn,nd)
                 num=num+1
-                @goto eyeD
+                @goto uniqNodes
             end
         end
-        @label eyeD
+        @label uniqNodes
     end
     return ocn,num
 end
@@ -484,7 +497,7 @@ function lof_GoArcs(ocn,cnt)
             for j in ocn.osss
                 go_km=lof_pnt2pnt_dist(value.coord,j.coord)
                 if ggkm == Inf
-                    mxKm=lof_mxMvKm(go_km,value,j)
+                    mxKm=lof_mxMvKm(go_km,value,j,ocn.gOcbls,ocn.oOcbls)
                 end
                 if (mxKm && go_km <= ggkm)
                     push!(ocn.gOarcs,lof_buildArc(value,j,go_km))
@@ -524,13 +537,12 @@ function lof_buildArc(tl,hd,km)
 end
 
 #set maximum distance to connect the gens to oss with MV cable
-function lof_mxMvKm(l,gen,oss)
+function lof_mxMvKm(l,gen,oss,gOcbls,oOcbls)
     S=gen.mva
     mv=gen.kv
     hv=lod_ossKv()
-    wp=wndF_wndPrf([gen.name])
-    mvCbl=cstF_MVcbl2ossX(l,S,mv,wp).costs.ttl
-    hvCbl=cstF_HVcbl2oss(l-1,S,hv,wp).costs.ttl+cstF_MVcbl2ossX(1,S,mv,wp).costs.ttl
+    mvCbl=cstF_MVcbl2ossXChk(l,S,mv,[gen.name],gOcbls).costs.ttl
+    hvCbl=cstF_HVcbl2ossChk(l-1,S,hv,[gen.name],oOcbls).costs.ttl+cstF_MVcbl2ossXChk(1,S,mv,[gen.name],gOcbls).costs.ttl
     if mvCbl<=hvCbl
         answer=true
     else
