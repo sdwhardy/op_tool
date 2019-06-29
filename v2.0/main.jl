@@ -35,6 +35,26 @@ include("post_process/pp_2files.jl")#post processing
 include("post_process/pp_milp.jl")#post processing
 
 
+solutions=lpf_buildsetUpMilp()
+solutionsMp=lpf_buildMidMilp(solutions,1)
+solution=lpf_buildFnlMilp(solutionsMp)
+
+plotly()
+ppf_printOcnXY(solution[4])
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################################### OLd stuff
 optMaps=Array{eez,1}()
 optObjs=Array{Float64,1}()
 optIds=Array{Array{Int64,1},1}()
@@ -47,8 +67,6 @@ for i=1:9
     push!(optIds,solution["optIds"])
 end
 solutions=(optMaps,optObjs,optIds,domains)
-solutionsMp=lpf_buildMidMilp(solutions)
-
 mid9=load("v2.0/results/mid_sols/mid9.jld")
 deleteat!(solutionsMp[4],1)
 solutionsMp[3][5]=[0]
@@ -57,18 +75,6 @@ push!(solutionsMp[4],solutionsMp[4][1])
 push!(solutionsMp[2],solutionsMp[2][1])
 push!(solutionsMp[3],solutionsMp[3][1])
 
-solutions=lpf_buildsetUpMilp()
-solution=lpf_buildFnlMilp(solutionsMp)
-q=load("v2.0/results/mid_sols2/mid12.jld")
-# For loading results
-
-
-#ppf_printOcnGPS(solution[1])
-plotly()
-ppf_printOcnXY(solutions[4][4])
-
-
-####################################################### OLd stuff
 optMapsMp=Array{eez,1}()
 optObjsMp=Array{Float64,1}()
 optIdsMp=Array{Array{Int64,1},1}()

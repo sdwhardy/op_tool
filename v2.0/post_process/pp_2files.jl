@@ -607,3 +607,44 @@ function ppf_neBrnch(mf,link,path)
 	print(mf,30.0,"\t")
 	print(mf,trunc(Int,link.cable.mva*link.cable.num),"\t")
 end
+
+
+######################################
+######## save/retrieve results #######
+function ppf_savedCbls(domain)
+    #load current set of saved cables
+    if isfile("v2.0/results/cables/cable_"*string(trunc(Int64,lod_ossKv()))*string(trunc(Int64,lod_cncsKv()))*".jld") == true
+        cbl_set=load("v2.0/results/cables/cable_"*string(trunc(Int64,lod_ossKv()))*string(trunc(Int64,lod_cncsKv()))*".jld")["domain"]
+        domain.oOcbls=cbl_set.oOcbls
+        domain.oPcbls=cbl_set.oPcbls
+        domain.oPXcbls=cbl_set.oPXcbls
+        domain.gOcbls=cbl_set.gOcbls
+        domain.gPcbls=cbl_set.gPcbls
+        domain.dcCbls=cbl_set.dcCbls
+    else
+    end
+    return domain
+end
+
+function ppf_saveResults(domain,asBuilt,solution,optIds,folder)
+    #check appropriate directories exist
+    if isdir("v2.0/results/"*folder*string(trunc(Int64,lod_ossKv()))*"kv_"*string(trunc(Int64,lod_cncsKv()))*"kv") == false
+    else
+        mkdir("v2.0/results/"*folder*string(trunc(Int64,lod_ossKv()))*"kv_"*string(trunc(Int64,lod_cncsKv()))*"kv")
+    end
+    if isdir("v2.0/results/cables") == false
+    else
+        mkdir("v2.0/results/cables")
+    end
+
+    #save cables individually and the save results without cables
+    save("v2.0/results/cables/cable_"*string(trunc(Int64,lod_ossKv()))*string(trunc(Int64,lod_cncsKv()))*".jld", "oOcbls", domain.oOcbls,"oPcbls",domain.oPcbls,"oPXcbls",domain.oPXcbls,"gOcbls", domain.gOcbls,"gPcbls", domain.gPcbls,"dcCbls", domain.dcCbls)
+    domain.oOcbls=[]
+    domain.oPcbls=[]
+    domain.oPXcbls=[]
+    domain.gOcbls=[]
+    domain.gPcbls=[]
+    domain.dcCbls=[]
+    save("v2.0/results/"*folder*string(trunc(Int64,lod_ossKv()))*"kv_"*string(trunc(Int64,lod_cncsKv()))*"kv/"*string(trunc(Int64,lod_ossKv()))*string(trunc(Int64,lod_cncsKv()))*"_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"],"optIds",optIds,"domain", domain,"solve_time", solution["solve_time"],"continuous_obj", solution["objective_lb"])
+    return domain
+end
