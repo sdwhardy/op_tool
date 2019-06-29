@@ -372,11 +372,12 @@ function ppf_opBrnch(mf,oParcs,optLout,cnt,oPcbls,oPXcbls)
 			if lod_ossKv() == lod_pccKv()
 				cable=cstF_HVcbl2pccChk(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),[path.tail.wnds[1]],oPcbls)
 				link.cable=cable
+				link.costs.ttl=cable.costs.ttl
 			else
 				link=cstF_HVcbl2pccXChk(path.lngth,path.tail.mvas[1]/2,lod_ossKv(),[path.tail.wnds[1]],oPXcbls)
 			end
 			ppf_ifUnderSized(link.cable,path.tail.mvas[1]/2,lod_ossKv(),path.lngth)
-			link.costs.ttl=cable.costs.ttl
+
 			if link.cable.num != 0
 				ppf_candiBrnch(mf,link,path,optLout)
 			else
@@ -392,11 +393,12 @@ function ppf_opBrnch(mf,oParcs,optLout,cnt,oPcbls,oPXcbls)
 				if lod_ossKv() == lod_pccKv()
 					cable=cstF_HVcbl2pccChk(path.lngth,mva,lod_ossKv(),ka,oPcbls)
 					link.cable=cable
+					link.costs.ttl=cable.costs.ttl
 				else
 					link=cstF_HVcbl2pccXChk(path.lngth,mva,lod_ossKv(),ka,oPXcbls)
 				end
 				ppf_ifUnderSized(link.cable,mva,lod_ossKv(),path.lngth)
-				link.costs.ttl=cable.costs.ttl
+
 				if link.cable.num != 0
 					ppf_candiBrnch(mf,link,path,optLout)
 				else
@@ -409,11 +411,12 @@ function ppf_opBrnch(mf,oParcs,optLout,cnt,oPcbls,oPXcbls)
 				if lod_ossKv() == lod_pccKv()
 					cable=cstF_HVcbl2pccChk(path.lngth,mva,lod_ossKv(),path.tail.wnds,oPcbls)
 					link.cable=cable
+					link.costs.ttl=cable.costs.ttl
 				else
 					link=cstF_HVcbl2pccXChk(path.lngth,mva,lod_ossKv(),path.tail.wnds,oPXcbls)
 				end
 				ppf_ifUnderSized(link.cable,mva,lod_ossKv(),path.lngth)
-				link.costs.ttl=cable.costs.ttl
+
 				if link.cable.num != 0
 					lrgFnd = true
 					ppf_candiBrnch(mf,link,path,optLout)

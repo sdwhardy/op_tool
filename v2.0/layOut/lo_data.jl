@@ -182,7 +182,7 @@ end
 
 #set offshore transmission voltage
 function lod_ossKv()
-    return 220.0
+    return 400.0
 end
 
 #set collector voltage

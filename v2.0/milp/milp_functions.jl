@@ -1,12 +1,10 @@
 #Calls Power Models on the input file
+#nme="milp"
+#time=20000
 function milp_main(nme,time)
     filename="v2.0/results/"*nme*".m"
     mv("v2.0/results/tnep_map.mat", filename, force=true)
-<<<<<<< HEAD
-    solver=GurobiSolver(Presolve=1, TimeLimit=20000.0)
-=======
     solver=GurobiSolver(Presolve=1, TimeLimit=time)
->>>>>>> 7280fa4894d55133ede8aa629f3ff1d5759d3655
     result = run_tnep(filename, DCPPowerModel, solver)
     network_data = PowerModels.parse_file(filename)
     return result, network_data
@@ -30,19 +28,19 @@ function lpf_buildsetUpMilp()
             domain.gPcbls=solutions[4][length(solutions[4])].gPcbls
             domain.dcCbls=solutions[4][length(solutions[4])].dcCbls
         else
-<<<<<<< HEAD
-            solut=load("v2.0/results/n_7a.jld")["domain"]
-            solut.gOcbls=[]
-            solut.gPcbls=[]
-            solut.dcCbls=[]
-=======
-            solut=load("v2.0/results/partial_sols/n_1.jld")["domain"]
->>>>>>> 7280fa4894d55133ede8aa629f3ff1d5759d3655
-            domain.oOcbls=solut.oOcbls
-            domain.oPcbls=solut.oPcbls
-            domain.oPXcbls=solut.oPXcbls
-            #domain.gOcbls=solut.gOcbls
-            #domain.gPcbls=solut.gPcbls
+
+            #solut.gOcbls=[]
+            #solut.gPcbls=[]
+            #solut.dcCbls=[]
+            domain.oOcbls=[]
+            domain.oPcbls=[]
+            domain.oPXcbls=[]
+            solut=load("v2.0/results/33kv220kv/n_17.jld")["domain"]
+            #domain.oOcbls=solut.oOcbls
+            #domain.oPcbls=solut.oPcbls
+            #domain.oPXcbls=solut.oPXcbls
+            domain.gOcbls=solut.gOcbls
+            domain.gPcbls=solut.gPcbls
             #domain.dcCbls=solut.dcCbls
         end
         ppf_main2mfile(domain,optLout,mxObj,cntrl)
@@ -57,12 +55,9 @@ function lpf_buildsetUpMilp()
         push!(solutions[2],solution["objective"])
         push!(solutions[3],optIds)
         push!(solutions[4],domain)
-<<<<<<< HEAD
-        save("v2.0/results/33kv220kv/n_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"], "domain", domain)
-=======
-        save("v2.0/results/partial_sols/n_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"],"optIds",optIds,"domain", domain)
->>>>>>> 7280fa4894d55133ede8aa629f3ff1d5759d3655
-    end
+
+        save("v2.0/results/33kv400kv/n_"*string(cntrl.xXrad[1])*".jld", "asBuilt", asBuilt,"objective",solution["objective"],"optIds",optIds,"domain", domain,"solve_time", solution["solve_time"],"continuous_obj", solution["objective_lb"])
+end
     return solutions
 end
 
@@ -87,7 +82,7 @@ function lpf_buildFnlMilp(solutions)
     save("v2.0/results/partial_sols/final.jld", "asBuilt", asBuilt,"objective","optIds",optIds,solution["objective"], "domain", domain)
     return (asBuilt,solution["objective"],Ids,domain)
 end
-
+#solutions=solutionsMpA
 function lpf_buildMidMilp(solutions,nID)
     optLout,mxObj,cntrl=lpd_fnlProbSetUp()
     (value,index)=findmin(solutions[2])

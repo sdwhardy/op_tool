@@ -39,7 +39,7 @@ optIds=Array{Array{Int64,1},1}()
 domains=Array{eez,1}()
 solutions=(optMaps,optObjs,optIds,domains)
 for i=1:17
-    solution=load("v2.0/results/partial_sols/n_"*string(i)*".jld")
+    solution=load("v2.0/results/33kv220kv/n_"*string(i)*".jld")
     push!(optMaps,solution["asBuilt"])
     push!(domains,solution["domain"])
     push!(optObjs,solution["objective"])
