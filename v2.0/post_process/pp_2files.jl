@@ -576,10 +576,11 @@ end
 function ppf_neBuild(link,path,optLout)
 	strt=0.0
 	eyeD=string(trunc(Int,link.cable.num*link.cable.mva))*string(path.tail.id)*string(path.head.id)
-	for i=1:1:length(optLout)
-		if string(eyeD) == string(optLout[i])
+	optLout_temp=deepcopy(optLout)
+	for i=1:1:length(optLout_temp)
+		if string(eyeD) == string(optLout_temp[i])
 			strt=1.0
-			deleteat!(optLout,i)
+			deleteat!(optLout_temp,i)
 			@goto end_neBuild
 		end
 	end

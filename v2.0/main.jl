@@ -33,18 +33,42 @@ include("milp/milp_functions.jl")#milp
 include("post_process/pp_2screen.jl")#post processing
 include("post_process/pp_2files.jl")#post processing
 include("post_process/pp_milp.jl")#post processing
+
+
 optMaps=Array{eez,1}()
 optObjs=Array{Float64,1}()
 optIds=Array{Array{Int64,1},1}()
 domains=Array{eez,1}()
-solutions=(optMaps,optObjs,optIds,domains)
-for i=1:17
-    solution=load("v2.0/results/33kv220kv/n_"*string(i)*".jld")
+for i=1:9
+    solution=load("v2.0/results/mid_sols/mid"*string(i)*".jld")
     push!(optMaps,solution["asBuilt"])
     push!(domains,solution["domain"])
     push!(optObjs,solution["objective"])
+    push!(optIds,solution["optIds"])
 end
+solutions=(optMaps,optObjs,optIds,domains)
+solutionsMp=lpf_buildMidMilp(solutions)
 
+mid9=load("v2.0/results/mid_sols/mid9.jld")
+deleteat!(solutionsMp[4],1)
+solutionsMp[3][5]=[0]
+push!(solutionsMp[1],solutionsMp[1][1])
+push!(solutionsMp[4],solutionsMp[4][1])
+push!(solutionsMp[2],solutionsMp[2][1])
+push!(solutionsMp[3],solutionsMp[3][1])
+
+solutions=lpf_buildsetUpMilp()
+solution=lpf_buildFnlMilp(solutionsMp)
+q=load("v2.0/results/mid_sols2/mid12.jld")
+# For loading results
+
+
+#ppf_printOcnGPS(solution[1])
+plotly()
+ppf_printOcnXY(solutions[4][4])
+
+
+####################################################### OLd stuff
 optMapsMp=Array{eez,1}()
 optObjsMp=Array{Float64,1}()
 optIdsMp=Array{Array{Int64,1},1}()
@@ -69,21 +93,17 @@ for i=1:1:length(solutions)-1
     push!(domainsMpA,solutions[4][i])
     push!(domainsMpA,solutions[4][i+1])
     solutionsMpA=(optMapsMpA,optObjsMpA,optIdsMpA,domainsMpA)
-
-    push!(solutionsMp,lpf_buildMidMilp(solutionsMpA,nID))
+    aBuilt,objct,eYeds,domn=lpf_buildMidMilp(solutionsMpA,nID)
+    push!(solutionsMp[1],deepcopy(aBuilt))
+    push!(solutionsMp[2],deepcopy(objct))
+    push!(solutionsMp[3],deepcopy(eYeds))
+    push!(solutionsMp[4],deepcopy(domn))
 end
 
 solution=lpf_buildFnlMilp(solutions)
 solutions=lpf_buildsetUpMilp()
 #ppf_printOcnGPS(solution[1])
-<<<<<<< HEAD
 solution=load("v2.0/results/33kv220kv/n_1.jld")
-=======
-
-
-
-solution=
->>>>>>> 7280fa4894d55133ede8aa629f3ff1d5759d3655
 plotly()
 ppf_printOcnXY(solution["asBuilt"])
 #=println(solution["objective"])
