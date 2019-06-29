@@ -53,19 +53,20 @@ end
 
 #Runs final problem
 function lpf_buildFnlMilp(solutions)
+    solutions=solutionsMp
     optLout,mxObj,cntrl=lpd_fnlProbSetUp()
     (value,index)=findmin(solutions[2])
     mxObj=ceil(Int64,value)
     #optLout=solutions[3][index]
 
     mxObj=ceil(Int64,value+5)
-    optLout=solutionsPair[3][index]
+    optLout=solutions[3][index]
 
     domain=lof_layoutEez_Sum(solutions,cntrl)
     domain.angle=solutions[4][1].angle
     domain.offset=solutions[4][1].offset
     ppf_main2mfile(domain,optLout,mxObj,cntrl)
-    solution,nw_data=milp_main("milp",70000)
+    solution,nw_data=milp_main("milp",25000)
     asBuilt,Ids=ppm_reCnstrctSol(solution,nw_data,domain)
     asBuilt.pccs=lof_reOrderNodes(asBuilt.pccs)
     asBuilt.gens=lof_reOrderNodes(asBuilt.gens)
